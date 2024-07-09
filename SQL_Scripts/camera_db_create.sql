@@ -9,6 +9,7 @@ DROP TABLE IF EXISTS trips;
 DROP TABLE IF EXISTS bag_files;
 DROP TABLE IF EXISTS camera;
 DROP TABLE IF EXISTS camera_parameters;
+DROP TABLE IF EXISTS spatial_ref_sys;
 */
 
 CREATE EXTENSION postgis;
