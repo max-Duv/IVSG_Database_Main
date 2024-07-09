@@ -10,6 +10,7 @@ DROP TABLE IF EXISTS bag_files;
 DROP TABLE IF EXISTS lidar2d;
 DROP TABLE IF EXISTS lidar3d;
 DROP TABLE IF EXISTS laser_parameters;
+DROP TABLE IF EXISTS spatial_ref_sys;
 */
 
 CREATE EXTENSION postgis;
