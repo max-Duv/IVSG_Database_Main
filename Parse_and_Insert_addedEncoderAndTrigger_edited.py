@@ -11,6 +11,7 @@ Accepts a filename as an optional argument. Operates on all bagfiles in current 
 Written by Liming Gao at 2020 Feb. at IVSG
 
 Edited by Wushuang Bai 2022 11 03
+Edited by Vamsi Gundavarapu, Max Duverneuil, and Sadie Duncan 2024 07 --
 
 Supervised by Professor Sean Brennan
 
@@ -18,7 +19,7 @@ To do list:
 1. (DONE) Make the insert of base_stations and vehicle just executes once.(done use conflict on)
 2. (DONE - NEW) similar with setBaseStation, we need a setVehicle method,
 3. add a class method in database to insert multiple rows data. and then modify sensors method, and try to select sensor id before parsing 
-4. add position variance to parseGarminGP
+4. (DONE - NEW) add position variance to parseGarminGP
 5. it seems that the first line was missed when using bulk insert
 6. (DONE) Check the source of adis imu data covariance,datasheet or? http://docs.ros.org/melodic/api/sensor_msgs/html/msg/Imu.html(done)
 7. modify adis_code.cpp where covariacne bwt accelaration and angular velocity is reverse. 
@@ -28,10 +29,10 @@ into adis_16407 parameters table.(done)
 10. think about how to orginaize the topic with two sensors, eg, encoder and steering angle
 11. (DONE) conflict on setBaseStation and vehicel id,and the repeat issue of trips
 12. (DONE - NEW) add temperature, pressure and magnetic into adis_imu
-13. for laser, change the text data type to array
+13. (DONE - NEW - change in DB schema) for laser, change the text data type to array
 14. improve the process when you re-parse the data. error capture in database.py bulk insert
 15. debug the delete and reinsert part
-16. fix correctTimeTrigger() method
+16. (UPDATED - CHECK COMMENTS) fix correctTimeTrigger() method
 17. (DONE) add parse function for encoder
 18. (DONE) add parse function for trigger
 
@@ -41,12 +42,10 @@ Finished:
 
 To do:
 	3. add a class method in database to insert multiple rows data. and then modify sensors method, and try to select sensor id before parsing 
-	4. add position variance to parseGarminGP
 	5. it seems that the first line was missed when using bulk insert
 	7. modify adis_code.cpp where covariacne bwt accelaration and angular velocity is reverse. 
 	9. add parameters table for each sensor, store parameters including units, variances, and so on 
 	10. think about how to orginaize the topic with two sensors, eg, encoder and steering angle
-	13. for laser, change the text data type to array
 	14. improve the process when you re-parse the data. error capture in database.py bulk insert
 	15. debug the delete and reinsert part
 	16. fix correctTimeTrigger() method
@@ -99,6 +98,7 @@ class Parse:
 		# create the folder for txt files
 		self.folder_name = folder_name
 
+		'''
 		# NEW: Based off of fcn_DataClean_determineDataType
 		self.make_sure_path_exists(self.folder_name + '/gps')
 		self.make_sure_path_exists(self.folder_name + '/imu')
@@ -113,8 +113,8 @@ class Parse:
 		self.make_sure_path_exists(self.folder_name + '/camera')
 		self.make_sure_path_exists(self.folder_name + '/other')
 		self.replace_all = False
-
 		'''
+		
 		self.make_sure_path_exists(self.folder_name + '/gps')
 		self.make_sure_path_exists(self.folder_name + '/imu')
 		self.make_sure_path_exists(self.folder_name + '/laser')
@@ -124,7 +124,6 @@ class Parse:
 		self.make_sure_path_exists(self.folder_name + '/parseEncoder')
 		self.make_sure_path_exists(self.folder_name + '/parseTrigger')
 		self.replace_all = False
-		'''
 
 	'''
 		============================= Method make_sure_path_exists() ====================================
@@ -600,10 +599,17 @@ class Parse:
 
 			time = repr(msg.header.stamp.secs + msg.header.stamp.nsecs * 10 ** (-9))
 
+			#NEW: add position variance to parseGarminGP
+			# Assuming position_covariance is an array [lat_var, lon_var, alt_var]
+			# latitude_variance = msg.position_covariance[0]  # Placeholder index for latitude variance
+			# longitude_variance = msg.position_covariance[1]  # Placeholder index for longitude variance
+			# altitude_variance = msg.position_covariance[2]  # Placeholder index for altitude variance
+
 			#NEW: use a nested loop instead to speed things up and simplify code?
 			to_write = [sensor_id, bag_file_id, self.unixTimeToTimeStamp(msg.header.stamp.secs), 
 			   msg.header.stamp.secs, msg.header.stamp.nsecs, time, msg.status.status, 
-			   msg.status.service, msg.latitude, msg.longitude, msg.altitude]
+			   msg.status.service, msg.latitude, msg.longitude, msg.altitude,
+			   msg.position_covariance[0], msg.position_covariance[1], msg.position_covariance[2]]
 			
 			for item in to_write:
 				file.write(str(item))
@@ -631,6 +637,12 @@ class Parse:
 			file.write(str(msg.longitude))
 			file.write(',')
 			file.write(str(msg.altitude))
+			file.write(',')
+			file.write(str(msg.position_covariance[0]))
+			file.write(',')
+			file.write(str(msg.position_covariance[1]]))
+			file.write(',')
+			file.write(str(msg.position_covariance[2]))
 			'''
 
 			file.write('\n')
@@ -1372,9 +1384,9 @@ class Parse:
 			file.write(',')
 			file.write(str(msg.scan_time))
 			file.write(',')
-			# file.write('"' + ' '.join(map(str, msg.ranges)) + '"')  # This removes the leading and lagging parentheses from this message
+			# file.write('ARRAY[' + ' '.join(map(str, msg.ranges)) + ']')  # This removes the leading and lagging parentheses from this message
 			# file.write(',')
-			# file.write('"' + ' '.join(map(str, msg.intensities)) + '"')  # This removes the leading and lagging parentheses from this message
+			# file.write('ARRAY[' + ' '.join(map(str, msg.intensities)) + ']')  # This removes the leading and lagging parentheses from this message
 			file.write(' '.join(map(str, msg.ranges)))  # This join the element in msg.ranges tuple
 			file.write(',')
 			file.write(' '.join(map(str, msg.intensities)))  # This removes the leading and lagging parentheses from this message
@@ -2228,7 +2240,7 @@ def main(args):
 		exit_parse()
 
 	# Step3: Instance of Parse class
-	db_name = 'mapping_van_raw'
+	db_name = 'updated_mapping_van_raw'
 	folder_name = directory + 'raw_data'  # the folder
 	p = Parse(folder_name, db_name)
 
