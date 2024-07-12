@@ -473,10 +473,12 @@ class Parse:
 			# Many parse functions also start with sensor_id, bag_file_id, self.unixTimeToTimeStamp(msg.header.stamp.secs), 
 			# msg.header.stamp.secs, msg.header.stamp.nsecs, and time -- create global variable so only have to type this once
 
+			#EDIT
 			to_write = [sensor_id, bag_file_id, self.unixTimeToTimeStamp(msg.header.stamp.secs), 
-			   msg.header.stamp.secs, msg.header.stamp.nsecs, time, msg.Status, msg.Latitude, msg.Longitude,
-			   msg.Height, msg.East_Velocity, msg.North_Velocity, msg.Up_Velocity, np.deg2rad(msg.Roll), 
-			   np.deg2rad(msg.Pitch), np.deg2rad(90 - msg.Azimuth), msg.GPS_Week, msg.Seconds]
+						msg.header.stamp.secs, msg.header.stamp.nsecs, time,
+						msg.Status, msg.Latitude, msg.Longitude,
+						msg.Height, msg.East_Velocity, msg.North_Velocity, msg.Up_Velocity, np.deg2rad(msg.Roll), 
+						np.deg2rad(msg.Pitch), np.deg2rad(90 - msg.Azimuth), msg.GPS_Week, msg.Seconds]
 			
 			for item in to_write:
 				file.write(str(item))
@@ -607,13 +609,16 @@ class Parse:
 
 			#NEW: use a nested loop instead to speed things up and simplify code?
 			to_write = [sensor_id, bag_file_id, self.unixTimeToTimeStamp(msg.header.stamp.secs), 
-			   msg.header.stamp.secs, msg.header.stamp.nsecs, time, msg.status.status, 
-			   msg.status.service, msg.latitude, msg.longitude, msg.altitude,
-			   msg.position_covariance[0], msg.position_covariance[1], msg.position_covariance[2]]
+						msg.header.stamp.secs, msg.header.stamp.nsecs, time,
+						msg.status.status, msg.status.service,
+						msg.latitude, msg.longitude, msg.altitude,
+						msg.position_covariance[0], msg.position_covariance[1], msg.position_covariance[2]]
 			
 			for item in to_write:
 				file.write(str(item))
 				file.write(',')
+
+			file.write('\n')
 
 			'''
 			file.write(str(sensor_id))
@@ -644,8 +649,6 @@ class Parse:
 			file.write(',')
 			file.write(str(msg.position_covariance[2]))
 			'''
-
-			file.write('\n')
 
 			count += 1
 
@@ -721,6 +724,17 @@ class Parse:
 
 			time = repr(msg.header.stamp.secs + msg.header.stamp.nsecs * 10 ** (-9))
 
+			to_write = [sensor_id, bag_file_id, self.unixTimeToTimeStamp(msg.header.stamp.secs), 
+						msg.header.stamp.secs, msg.header.stamp.nsecs, time,
+						msg.twist.linear.x, msg.twist.linear.y]
+			
+			for item in to_write:
+				file.write(str(item))
+				file.write(',')
+			
+			file.write('\n')
+
+			'''
 			file.write(str(sensor_id))
 			file.write(',')
 			file.write(str(bag_file_id))
@@ -737,6 +751,7 @@ class Parse:
 			file.write(',')
 			file.write(str(msg.twist.linear.y))
 			file.write('\n')
+			'''
 
 			count += 1
 
@@ -827,6 +842,20 @@ class Parse:
 			time = repr(msg.header.stamp.secs +
 						msg.header.stamp.nsecs * 10 ** (-9))
 			
+			to_write = [sensor_id, bag_file_id, self.unixTimeToTimeStamp(msg.header.stamp.secs), 
+						msg.header.stamp.secs, msg.header.stamp.nsecs, time,
+						msg.AgeOfDiff, msg.NumOfSats, msg.GPSWeek, msg.GPSTimeOFWeek,
+						msg.Latitude, msg.Longitude, msg.Height,
+						msg.East_Velocity, msg.North_Velocity, msg.Up_Velocity,
+						msg.StdDevResid, msg.NavMode, msg.ManualMark, msg.ExtendedAgeOfDiff]
+			
+			for item in to_write:
+				file.write(str(item))
+				file.write(',')
+
+			file.write('\n')
+
+			'''
 			file.write(str(sensor_id))
 			file.write(',')
 			file.write(str(bag_file_id))
@@ -853,11 +882,11 @@ class Parse:
 			file.write(',')
 			file.write(str(msg.Height))
 			file.write(',')
-			file.write(str(msg.VNorth))
+			file.write(str(msg.East_Velocity))
 			file.write(',')
-			file.write(str(msg.VEast))
+			file.write(str(msg.North_Velocity))
 			file.write(',')
-			file.write(str(msg.VUp))
+			file.write(str(msg.Up_Velocity))
 			file.write(',')
 			file.write(str(msg.StdDevResid))
 			file.write(',')
@@ -867,6 +896,7 @@ class Parse:
 			file.write(',')
 			file.write(str(msg.ExtendedAgeOfDiff))
 			file.write('\n')
+			'''
 
 			count += 1
 
@@ -942,6 +972,19 @@ class Parse:
 
 			time = repr(msg.header.stamp.secs + msg.header.stamp.nsecs * 10 ** (-9))
 
+			to_write = [sensor_id, bag_file_id, self.unixTimeToTimeStamp(msg.header.stamp.secs), 
+						msg.header.stamp.secs, msg.header.stamp.nsecs, time,
+						msg.IMU_Status, msg.X_Accel, msg.Y_Accel, msg.Z_Accel,
+						msg.X_Gyro, msg.Y_Gyro, msg.Z_Gyro,
+						msg.GPS_Week, msg.Seconds]
+			
+			for item in to_write:
+				file.write(str(item))
+				file.write(',')
+
+			file.write('\n')
+
+			'''
 			file.write(str(sensor_id))
 			file.write(',')
 			file.write(str(bag_file_id))
@@ -972,6 +1015,7 @@ class Parse:
 			file.write(',')
 			file.write(str(msg.Seconds))
 			file.write('\n')
+			'''
 
 			count += 1
 
@@ -1044,6 +1088,17 @@ class Parse:
 
 			time = repr(msg.header.stamp.secs + msg.header.stamp.nsecs * 10 ** (-9))
 
+			to_write = [sensor_id, bag_file_id, self.unixTimeToTimeStamp(msg.header.stamp.secs), 
+						msg.header.stamp.secs, msg.header.stamp.nsecs, time,
+						msg.linear_acceleration.x, msg.linear_acceleration.y, msg.linear_acceleration.z,
+						msg.angular_velocity.x, msg.angular_velocity.y, msg.angular_velocity.z]
+			
+			for item in to_write:
+				file.write(str(item))
+				file.write(',')
+			file.write('\n')
+
+			'''
 			file.write(str(sensor_id))
 			file.write(',')
 			file.write(str(bag_file_id))
@@ -1068,6 +1123,7 @@ class Parse:
 			file.write(',')
 			file.write(str(msg.angular_velocity.z))
 			file.write('\n')
+			'''
 
 			count += 1
 
@@ -1154,6 +1210,19 @@ class Parse:
 
 			time = repr(msg.header.stamp.secs + msg.header.stamp.nsecs * 10 ** (-9))
 
+			to_write = [sensor_id, bag_file_id, self.unixTimeToTimeStamp(msg.header.stamp.secs), 
+						msg.header.stamp.secs, msg.header.stamp.nsecs, time,
+						str(10000), msg.counts[0], msg.counts[1],
+						msg.delta_counts[0], msg.delta_counts[1],
+						msg.angular_velocity[0], msg.angular_velocity[1]]
+			
+			for item in to_write:
+				file.write(str(item))
+				file.write(',')
+
+			file.write('\n')
+
+			'''
 			file.write(str(sensor_id))
 			file.write(',')
 			file.write(str(bag_file_id))
@@ -1180,6 +1249,7 @@ class Parse:
 			file.write(',')
 			file.write(str(msg.angular_velocity[1]))
 			file.write('\n')
+			'''
 
 			count += 1
 
@@ -1262,6 +1332,19 @@ class Parse:
 
 			time = repr(msg.header.stamp.secs + msg.header.stamp.nsecs * 10 ** (-9))
 
+			to_write = [sensor_id, bag_file_id, self.unixTimeToTimeStamp(msg.header.stamp.secs), 
+						msg.header.stamp.secs, msg.header.stamp.nsecs, time,
+						msg.left_counts, msg.right_counts,
+						msg.left_counts_filtered, msg.right_counts_filtered,
+						msg.left_angle, msg.right_angle, msg.angle]
+			
+			for item in to_write:
+				file.write(str(item))
+				file.write(',')
+
+			file.write('\n')
+
+			'''
 			file.write(str(sensor_id))
 			file.write(',')
 			file.write(str(bag_file_id))
@@ -1288,6 +1371,7 @@ class Parse:
 			file.write(',')
 			file.write(str(msg.angle))
 			file.write('\n')
+			'''
 
 			count += 1
 
@@ -1323,6 +1407,9 @@ class Parse:
 
 				return
 
+	'''
+	REDONE - USE XINYU'S/MAX'S NEW CODE
+	'''
 
 	'''
 		============================= Method parseLaser() ====================================
@@ -1428,6 +1515,9 @@ class Parse:
 
 				return
 
+	'''
+	REDONE - USE XINYU'S/MAX'S/VAMSI'S NEW CODE
+	'''
 
 	'''
 		============================= Method parseCamera() ====================================
@@ -1616,6 +1706,19 @@ class Parse:
 
 			time = repr(msg.header.stamp.secs + msg.header.stamp.nsecs * 10 ** (-9))
 
+			to_write = [sensor_id, bag_file_id, self.unixTimeToTimeStamp(msg.header.stamp.secs), 
+						msg.header.stamp.secs, msg.header.stamp.nsecs, time,
+						msg.C1, msg.C2, msg.C3, msg.C4, msg.E1, msg.P1,
+						msg.err_bad_character, msg.err_bad_element_structure, msg.err_bad_lowercase_character,
+						msg.err_bad_uppercase_character, msg.err_failed_time, msg.err_wrong_element_length]
+			
+			for item in to_write:
+				file.write(str(item))
+				file.write(',')
+
+			file.write('\n')
+
+			'''
 			file.write(str(sensor_id))
 			file.write(',')
 			file.write(str(bag_file_id))
@@ -1652,6 +1755,7 @@ class Parse:
 			file.write(',')
 			file.write(str(msg.err_wrong_element_length))
 			file.write('\n')
+			'''
 
 			count += 1
 
@@ -1725,6 +1829,20 @@ class Parse:
 
 			time = repr(msg.header.stamp.secs + msg.header.stamp.nsecs * 10 ** (-9))
 
+			to_write = [sensor_id, bag_file_id, self.unixTimeToTimeStamp(msg.header.stamp.secs), 
+						msg.header.stamp.secs, msg.header.stamp.nsecs, time,
+						msg.mode, msg.mode_counts, msg.adjone, msg.adjtwo, msg.adjthree,
+						msg.err_failed_mode_count, msg.err_failed_XI_format, msg.err_failed_checkInformation,
+						msg.err_trigger_unknown_error_occured, msg.err_bad_uppercase_character, msg.err_bad_lowercase_character,
+						msg.err_bad_three_adj_element, msg.err_bad_first_element, msg.err_bad_character, msg.err_wrong_element_length]
+			
+			for item in to_write:
+				file.write(str(item))
+				file.write(',')
+
+			file.write('\n')
+
+			'''
 			file.write(str(sensor_id))
 			file.write(',')
 			file.write(str(bag_file_id))
@@ -1767,6 +1885,7 @@ class Parse:
 			file.write(',')
 			file.write(str(msg.err_wrong_element_length))
 			file.write('\n')
+			'''
 
 			count += 1
 
