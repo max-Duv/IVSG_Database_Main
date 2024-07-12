@@ -411,7 +411,7 @@ class Parse:
 
 		_, status = self.db.query(query=q)
 		self.db.conn.commit()
-
+		
 	'''
 		============================= Method parseINS() ====================================
 		#	Method Purpose:
@@ -473,10 +473,22 @@ class Parse:
 			# Many parse functions also start with sensor_id, bag_file_id, self.unixTimeToTimeStamp(msg.header.stamp.secs), 
 			# msg.header.stamp.secs, msg.header.stamp.nsecs, and time -- create global variable so only have to type this once
 
-			#EDIT
-			to_write = [sensor_id, bag_file_id, self.unixTimeToTimeStamp(msg.header.stamp.secs), 
-						msg.header.stamp.secs, msg.header.stamp.nsecs, time,
-						msg.Status, msg.Latitude, msg.Longitude,
+			parse_fcn_write_beginning(self, sensor_id, bag_file_id, msg, bag_file, topic, output_file_name, file)
+
+			'''
+			parse_fcn_write_beginning(self, sensor_id, bag_file_id, msg, bag_file, topic, output_file_name, file)
+				to_write = [sensor_id, bag_file_id, self.unixTimeToTimeStamp(msg.header.stamp.secs), 
+							msg.header.stamp.secs, msg.header.stamp.nsecs]
+	
+				for item in to_write:
+					file.write(str(item))
+					file.write(',')
+
+				file.write(time)
+				file.write(',')
+			'''
+
+			to_write = [msg.Status, msg.Latitude, msg.Longitude,
 						msg.Height, msg.East_Velocity, msg.North_Velocity, msg.Up_Velocity, np.deg2rad(msg.Roll), 
 						np.deg2rad(msg.Pitch), np.deg2rad(90 - msg.Azimuth), msg.GPS_Week, msg.Seconds]
 			
@@ -608,9 +620,20 @@ class Parse:
 			# altitude_variance = msg.position_covariance[2]  # Placeholder index for altitude variance
 
 			#NEW: use a nested loop instead to speed things up and simplify code?
-			to_write = [sensor_id, bag_file_id, self.unixTimeToTimeStamp(msg.header.stamp.secs), 
-						msg.header.stamp.secs, msg.header.stamp.nsecs, time,
-						msg.status.status, msg.status.service,
+			parse_fcn_write_beginning(self, sensor_id, bag_file_id, msg, bag_file, topic, output_file_name, file)
+			'''
+				to_write = [sensor_id, bag_file_id, self.unixTimeToTimeStamp(msg.header.stamp.secs), 
+							msg.header.stamp.secs, msg.header.stamp.nsecs]
+	
+				for item in to_write:
+					file.write(str(item))
+					file.write(',')
+
+				file.write(time)
+				file.write(',')
+			'''
+
+			to_write = [msg.status.status, msg.status.service,
 						msg.latitude, msg.longitude, msg.altitude,
 						msg.position_covariance[0], msg.position_covariance[1], msg.position_covariance[2]]
 			
@@ -724,9 +747,20 @@ class Parse:
 
 			time = repr(msg.header.stamp.secs + msg.header.stamp.nsecs * 10 ** (-9))
 
-			to_write = [sensor_id, bag_file_id, self.unixTimeToTimeStamp(msg.header.stamp.secs), 
-						msg.header.stamp.secs, msg.header.stamp.nsecs, time,
-						msg.twist.linear.x, msg.twist.linear.y]
+			parse_fcn_write_beginning(self, sensor_id, bag_file_id, msg, bag_file, topic, output_file_name, file)
+			'''
+				to_write = [sensor_id, bag_file_id, self.unixTimeToTimeStamp(msg.header.stamp.secs), 
+							msg.header.stamp.secs, msg.header.stamp.nsecs]
+	
+				for item in to_write:
+					file.write(str(item))
+					file.write(',')
+
+				file.write(time)
+				file.write(',')
+			'''
+
+			to_write = [msg.twist.linear.x, msg.twist.linear.y]
 			
 			for item in to_write:
 				file.write(str(item))
@@ -842,9 +876,20 @@ class Parse:
 			time = repr(msg.header.stamp.secs +
 						msg.header.stamp.nsecs * 10 ** (-9))
 			
-			to_write = [sensor_id, bag_file_id, self.unixTimeToTimeStamp(msg.header.stamp.secs), 
-						msg.header.stamp.secs, msg.header.stamp.nsecs, time,
-						msg.AgeOfDiff, msg.NumOfSats, msg.GPSWeek, msg.GPSTimeOFWeek,
+			parse_fcn_write_beginning(self, sensor_id, bag_file_id, msg, bag_file, topic, output_file_name, file)
+			'''
+				to_write = [sensor_id, bag_file_id, self.unixTimeToTimeStamp(msg.header.stamp.secs), 
+							msg.header.stamp.secs, msg.header.stamp.nsecs]
+	
+				for item in to_write:
+					file.write(str(item))
+					file.write(',')
+
+				file.write(time)
+				file.write(',')
+			'''
+			
+			to_write = [msg.AgeOfDiff, msg.NumOfSats, msg.GPSWeek, msg.GPSTimeOFWeek,
 						msg.Latitude, msg.Longitude, msg.Height,
 						msg.East_Velocity, msg.North_Velocity, msg.Up_Velocity,
 						msg.StdDevResid, msg.NavMode, msg.ManualMark, msg.ExtendedAgeOfDiff]
@@ -972,9 +1017,20 @@ class Parse:
 
 			time = repr(msg.header.stamp.secs + msg.header.stamp.nsecs * 10 ** (-9))
 
-			to_write = [sensor_id, bag_file_id, self.unixTimeToTimeStamp(msg.header.stamp.secs), 
-						msg.header.stamp.secs, msg.header.stamp.nsecs, time,
-						msg.IMU_Status, msg.X_Accel, msg.Y_Accel, msg.Z_Accel,
+			parse_fcn_write_beginning(self, sensor_id, bag_file_id, msg, bag_file, topic, output_file_name, file)
+			'''
+				to_write = [sensor_id, bag_file_id, self.unixTimeToTimeStamp(msg.header.stamp.secs), 
+							msg.header.stamp.secs, msg.header.stamp.nsecs]
+	
+				for item in to_write:
+					file.write(str(item))
+					file.write(',')
+
+				file.write(time)
+				file.write(',')
+			'''
+
+			to_write = [msg.IMU_Status, msg.X_Accel, msg.Y_Accel, msg.Z_Accel,
 						msg.X_Gyro, msg.Y_Gyro, msg.Z_Gyro,
 						msg.GPS_Week, msg.Seconds]
 			
@@ -1088,9 +1144,19 @@ class Parse:
 
 			time = repr(msg.header.stamp.secs + msg.header.stamp.nsecs * 10 ** (-9))
 
-			to_write = [sensor_id, bag_file_id, self.unixTimeToTimeStamp(msg.header.stamp.secs), 
-						msg.header.stamp.secs, msg.header.stamp.nsecs, time,
-						msg.linear_acceleration.x, msg.linear_acceleration.y, msg.linear_acceleration.z,
+			parse_fcn_write_beginning(self, sensor_id, bag_file_id, msg, bag_file, topic, output_file_name, file)
+			'''
+				to_write = [sensor_id, bag_file_id, self.unixTimeToTimeStamp(msg.header.stamp.secs), 
+							msg.header.stamp.secs, msg.header.stamp.nsecs]
+	
+				for item in to_write:
+					file.write(str(item))
+					file.write(',')
+
+				file.write(time)
+				file.write(',')
+			'''
+			to_write = [msg.linear_acceleration.x, msg.linear_acceleration.y, msg.linear_acceleration.z,
 						msg.angular_velocity.x, msg.angular_velocity.y, msg.angular_velocity.z]
 			
 			for item in to_write:
@@ -1210,9 +1276,20 @@ class Parse:
 
 			time = repr(msg.header.stamp.secs + msg.header.stamp.nsecs * 10 ** (-9))
 
-			to_write = [sensor_id, bag_file_id, self.unixTimeToTimeStamp(msg.header.stamp.secs), 
-						msg.header.stamp.secs, msg.header.stamp.nsecs, time,
-						str(10000), msg.counts[0], msg.counts[1],
+			parse_fcn_write_beginning(self, sensor_id, bag_file_id, msg, bag_file, topic, output_file_name, file)
+			'''
+				to_write = [sensor_id, bag_file_id, self.unixTimeToTimeStamp(msg.header.stamp.secs), 
+							msg.header.stamp.secs, msg.header.stamp.nsecs]
+	
+				for item in to_write:
+					file.write(str(item))
+					file.write(',')
+
+				file.write(time)
+				file.write(',')
+			'''
+
+			to_write = [str(10000), msg.counts[0], msg.counts[1],
 						msg.delta_counts[0], msg.delta_counts[1],
 						msg.angular_velocity[0], msg.angular_velocity[1]]
 			
@@ -1332,9 +1409,20 @@ class Parse:
 
 			time = repr(msg.header.stamp.secs + msg.header.stamp.nsecs * 10 ** (-9))
 
-			to_write = [sensor_id, bag_file_id, self.unixTimeToTimeStamp(msg.header.stamp.secs), 
-						msg.header.stamp.secs, msg.header.stamp.nsecs, time,
-						msg.left_counts, msg.right_counts,
+			parse_fcn_write_beginning(self, sensor_id, bag_file_id, msg, bag_file, topic, output_file_name, file)
+			'''
+				to_write = [sensor_id, bag_file_id, self.unixTimeToTimeStamp(msg.header.stamp.secs), 
+							msg.header.stamp.secs, msg.header.stamp.nsecs]
+	
+				for item in to_write:
+					file.write(str(item))
+					file.write(',')
+
+				file.write(time)
+				file.write(',')
+			'''
+
+			to_write = [msg.left_counts, msg.right_counts,
 						msg.left_counts_filtered, msg.right_counts_filtered,
 						msg.left_angle, msg.right_angle, msg.angle]
 			
@@ -1706,15 +1794,29 @@ class Parse:
 
 			time = repr(msg.header.stamp.secs + msg.header.stamp.nsecs * 10 ** (-9))
 
-			to_write = [sensor_id, bag_file_id, self.unixTimeToTimeStamp(msg.header.stamp.secs), 
-						msg.header.stamp.secs, msg.header.stamp.nsecs, time,
-						msg.C1, msg.C2, msg.C3, msg.C4, msg.E1, msg.P1,
+			parse_fcn_write_beginning(self, sensor_id, bag_file_id, msg, bag_file, topic, output_file_name, file)
+			'''
+				to_write = [sensor_id, bag_file_id, self.unixTimeToTimeStamp(msg.header.stamp.secs), 
+							msg.header.stamp.secs, msg.header.stamp.nsecs]
+	
+				for item in to_write:
+					file.write(str(item))
+					file.write(',')
+
+				file.write(time)
+				file.write(',')
+			'''
+
+			to_write = [msg.C1, msg.C2, msg.C3, msg.C4, msg.E1, msg.P1,
 						msg.err_bad_character, msg.err_bad_element_structure, msg.err_bad_lowercase_character,
 						msg.err_bad_uppercase_character, msg.err_failed_time, msg.err_wrong_element_length]
 			
 			for item in to_write:
 				file.write(str(item))
 				file.write(',')
+
+			file.write(time)
+			file.write(',')
 
 			file.write('\n')
 
@@ -1829,9 +1931,20 @@ class Parse:
 
 			time = repr(msg.header.stamp.secs + msg.header.stamp.nsecs * 10 ** (-9))
 
-			to_write = [sensor_id, bag_file_id, self.unixTimeToTimeStamp(msg.header.stamp.secs), 
-						msg.header.stamp.secs, msg.header.stamp.nsecs, time,
-						msg.mode, msg.mode_counts, msg.adjone, msg.adjtwo, msg.adjthree,
+			parse_fcn_write_beginning(self, sensor_id, bag_file_id, msg, bag_file, topic, output_file_name, file)
+			'''
+				to_write = [sensor_id, bag_file_id, self.unixTimeToTimeStamp(msg.header.stamp.secs), 
+							msg.header.stamp.secs, msg.header.stamp.nsecs]
+	
+				for item in to_write:
+					file.write(str(item))
+					file.write(',')
+
+				file.write(time)
+				file.write(',')
+			'''
+
+			to_write = [msg.mode, msg.mode_counts, msg.adjone, msg.adjtwo, msg.adjthree,
 						msg.err_failed_mode_count, msg.err_failed_XI_format, msg.err_failed_checkInformation,
 						msg.err_trigger_unknown_error_occured, msg.err_bad_uppercase_character, msg.err_bad_lowercase_character,
 						msg.err_bad_three_adj_element, msg.err_bad_first_element, msg.err_bad_character, msg.err_wrong_element_length]
@@ -2186,6 +2299,24 @@ class Parse:
 
 		self.replace_all = False
 
+'''
+NEW - function to simplify all of the parsing functions. Since the first 6 things to write are all the same for each function,
+just call this function. Also, use a loop.
+
+Note: Most things to write are of type string, except for time. Write time separately. 
+
+Note: HAVE NOT TESTED
+'''
+def parse_fcn_write_beginning(self, sensor_id, bag_file_id, msg, bag_file, topic, output_file_name, file):
+	to_write = [sensor_id, bag_file_id, self.unixTimeToTimeStamp(msg.header.stamp.secs), 
+				msg.header.stamp.secs, msg.header.stamp.nsecs]
+	
+	for item in to_write:
+		file.write(str(item))
+		file.write(',')
+
+	file.write(time)
+	file.write(',')
 '''
 	purpose: exit the system
 	algorithm: input(),os.listdir(directory)
