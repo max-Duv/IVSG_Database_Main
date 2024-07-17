@@ -2,14 +2,14 @@ Following some research, I found the bagpy library for Python.
   - Link: https://jmscslgroup.github.io/bagpy/installation.html
   - Notes: - bagpy can be used with Python 2.7 and 3.6 or later, not supported on Windows.
            - However, Google Colab (Visual Studio or other editor) works - so potentially not the most feasible
-           - Works on Ubuntu 18.04 - will test for Ubuntu 20.04
+           - Works on Ubuntu 18.04 and up - including Ubuntu 22.04
 
 Main Notes:
 - Using the bagpy library, you can easily display a table of all the topics, and create a CSV
-  file out of each topic (takes about an average of 4.5 seconds so far)
+  file out of each topic (takes about less than 4.5 seconds so far)
   - Not entirely sure about the accuracy of these results - need to check with Xinyu
   - Also not sure if the camera and LiDAR data may still need to be separately parsed
 - This still doesn't solve the issue of needing the middle step of a CSV file - but it may be a faster way to parse the data
-- From this: look into using the bagpy library in Ubuntu so that the code is only in Python scripts
+- From this: look into using the bagpy library in Ubuntu so that the code is only in Python scripts (DONE)
   - Find a way to cut out use of CSV files
   - Experiment using pandas and polars library
