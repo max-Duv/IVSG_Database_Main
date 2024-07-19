@@ -29,7 +29,7 @@ CREATE TABLE IF NOT EXISTS ivsg_members(
     id serial NOT NULL,
     first_name varchar(50) NOT NULL,
     last_name varchar(50) NOT NULL,
-    --date_added_to_db date NOT NULL DEFAULT GETDATE(),
+    date_added_to_db timestamp NOT NULL DEFAULT CURRENT_TIMESTAMP,
     CONSTRAINT ivsg_members_pk PRIMARY KEY (id),
     CONSTRAINT ivsg_member_name_unique UNIQUE (first_name, last_name)
 ); 
@@ -44,7 +44,7 @@ CREATE TABLE IF NOT EXISTS base_station_parameters (
     latitude_std_dev real NOT NULL,
     longitude_std_dev real NOT NULL,
     altitude_std_dev real NOT NULL,
-    --date_added_to_db date NOT NULL DEFAULT GETDATE(),
+    date_added_to_db timestamp NOT NULL DEFAULT CURRENT_TIMESTAMP,
     CONSTRAINT base_station_parameters_pk PRIMARY KEY (id),
     CONSTRAINT base_station_name_unique UNIQUE (base_station_name)
 );
@@ -54,7 +54,7 @@ CREATE TABLE IF NOT EXISTS trip_names (
     id serial NOT NULL,
     trip_name varchar(50) NOT NULL,
     trip_date date NOT NULL,
-    --date_added_to_db date NOT NULL DEFAULT GETDATE(),
+    date_added_to_db timestamp NOT NULL DEFAULT CURRENT_TIMESTAMP,
     CONSTRAINT trip_names_pk PRIMARY KEY (id),
     CONSTRAINT trip_name_unique UNIQUE (trip_name)
 );
@@ -110,7 +110,7 @@ CREATE TABLE IF NOT EXISTS bag_files (
     bag_file_name varchar(50) NOT NULL,
     bag_file_size int NOT NULL,
     trip_id int NOT NULL,
-    --date_added_to_db date NOT NULL DEFAULT GETDATE(),
+    date_added_to_db timestamp NOT NULL DEFAULT CURRENT_TIMESTAMP,
     CONSTRAINT bag_files_pk PRIMARY KEY (id),
     CONSTRAINT bag_file_name_trip_unique UNIQUE (bag_file_name, trip_id)
 );
@@ -125,7 +125,7 @@ CREATE TABLE IF NOT EXISTS pre_trip_details (
     pre_trip_starting_conditions_id int NOT NULL,
     pre_trip_notes text NULL,
     trip_date date NOT NULL,
-    --date_added_to_db date NOT NULL DEFAULT GETDATE(),
+    date_added_to_db timestamp NOT NULL DEFAULT CURRENT_TIMESTAMP,
     CONSTRAINT pre_trip_details_pk PRIMARY KEY (id),
     CONSTRAINT pre_trip_name_id_unique UNIQUE (trip_name_id)
 );
@@ -141,7 +141,7 @@ CREATE TABLE IF NOT EXISTS post_trip_details (
     trip_start_time timestamp NOT NULL,
     trip_end_time timestamp NOT NULL,
     --trip_date date NOT NULL DEFAULT GETDATE(),
-    --date_added_to_db date NOT NULL DEFAULT GETDATE(),
+    date_added_to_db timestamp NOT NULL DEFAULT CURRENT_TIMESTAMP,
     CONSTRAINT post_trip_details_pk PRIMARY KEY (id),
     CONSTRAINT post_trip_name_id_unique UNIQUE (trip_name_id)
 );
@@ -170,7 +170,7 @@ CREATE TABLE IF NOT EXISTS installation_parameters (
     orientation varchar(50) NOT NULL,
     calibration varchar(50) NOT NULL,
     installation_notes text NULL,
-    --date_added_to_db date NOT NULL DEFAULT GETDATE(),
+    date_added_to_db timestamp NOT NULL DEFAULT CURRENT_TIMESTAMP,
     CONSTRAINT installation_parameters_pk PRIMARY KEY (id)
 );
 
@@ -191,7 +191,7 @@ CREATE TABLE IF NOT EXISTS camera_parameters (
     distortion_k3 real NOT NULL,
     distortion_p1 real NOT NULL,
     distortion_p2 real NOT NULL,
-    --date_added_to_db date NOT NULL DEFAULT GETDATE(),
+    date_added_to_db timestamp NOT NULL DEFAULT CURRENT_TIMESTAMP,
     CONSTRAINT camera_parameters_pk PRIMARY KEY (id),
     CONSTRAINT camera_parameters_unique UNIQUE (purchasing_parameters_id,
     installation_parameters_id, focal_x, focal_y, center_x, center_y, skew,
@@ -204,7 +204,7 @@ CREATE TABLE IF NOT EXISTS code_parameters (
     id serial NOT NULL,
     purchasing_parameters_id int NOT NULL,
     installation_parameters_id int NOT NULL,
-    --date_added_to_db date NOT NULL DEFAULT GETDATE(),
+    date_added_to_db timestamp NOT NULL DEFAULT CURRENT_TIMESTAMP,
     CONSTRAINT code_parameters_pk PRIMARY KEY (id),
     CONSTRAINT code_parameters_unique UNIQUE (purchasing_parameters_id, installation_parameters_id)
     -- ^ may change later
@@ -216,7 +216,7 @@ CREATE TABLE IF NOT EXISTS encoder_parameters (
     purchasing_parameters_id int NOT NULL,
     installation_parameters_id int NOT NULL,
     counts_per_revolution int NOT NULL,
-    --date_added_to_db date NOT NULL DEFAULT GETDATE(),
+    date_added_to_db timestamp NOT NULL DEFAULT CURRENT_TIMESTAMP,
     CONSTRAINT encoder_parameters_pk PRIMARY KEY (id),
     CONSTRAINT encoder_parameters_unique UNIQUE (purchasing_parameters_id, installation_parameters_id, counts_per_revolution)
 );
@@ -226,7 +226,7 @@ CREATE TABLE IF NOT EXISTS gps_parameters (
     id serial NOT NULL,
     purchasing_parameters_id int NOT NULL,
     installation_parameters_id int NOT NULL,
-    --date_added_to_db date NOT NULL DEFAULT GETDATE(),
+    date_added_to_db timestamp NOT NULL DEFAULT CURRENT_TIMESTAMP,
     CONSTRAINT gps_parameters_pk PRIMARY KEY (id),
     CONSTRAINT gps_parameters_unique UNIQUE (purchasing_parameters_id, installation_parameters_id)
     -- ^ may change later
@@ -247,7 +247,7 @@ CREATE TABLE IF NOT EXISTS imu_parameters (
     gyro_cov float NOT NULL,
     mag_cov float NOT NULL,
     bar_cov float NOT NULL,
-    --date_added_to_db date NOT NULL DEFAULT GETDATE(),
+    date_added_to_db timestamp NOT NULL DEFAULT CURRENT_TIMESTAMP,
     CONSTRAINT imu_parameters_pk PRIMARY KEY (id),
     CONSTRAINT imu_parameters_unique UNIQUE (purchasing_parameters_id,
     installation_parameters_id, accel_scale, gyro_scale, mag_scale, bar_scale,
@@ -265,7 +265,7 @@ CREATE TABLE IF NOT EXISTS lidar_parameters (
     time_increment real NOT NULL,
     range_min real NOT NULL,
     range_max real NOT NULL,
-    --date_added_to_db date NOT NULL DEFAULT GETDATE(),
+    date_added_to_db timestamp NOT NULL DEFAULT CURRENT_TIMESTAMP,
     CONSTRAINT lidar_parameters_pk PRIMARY KEY (id),
     CONSTRAINT lidar_parameters_unique UNIQUE (purchasing_parameters_id,
     installation_parameters_id, angle_min, angle_max, angle_increment,
@@ -280,7 +280,7 @@ CREATE TABLE IF NOT EXISTS trigger_parameters (
     trigger_frequency_1 int NOT NULL,
     trigger_frequency_2 int NOT NULL,
     trigger_frequency_3 int NOT NULL,
-    --date_added_to_db date NOT NULL DEFAULT GETDATE(),
+    date_added_to_db timestamp NOT NULL DEFAULT CURRENT_TIMESTAMP,
     CONSTRAINT trigger_parameters_pk PRIMARY KEY (id),
     CONSTRAINT trigger_parameters_unique UNIQUE (purchasing_parameters_id,
     installation_parameters_id, trigger_frequency_1, trigger_frequency_2, trigger_frequency_3)
@@ -291,7 +291,7 @@ CREATE TABLE IF NOT EXISTS system_parameters (
     id serial NOT NULL,
     purchasing_parameters_id int NOT NULL,
     installation_parameters_id int NOT NULL,
-    --date_added_to_db date NOT NULL DEFAULT GETDATE(),
+    date_added_to_db timestamp NOT NULL DEFAULT CURRENT_TIMESTAMP,
     CONSTRAINT system_parameters_pk PRIMARY KEY (id),
     CONSTRAINT system_parameters_unique UNIQUE (purchasing_parameters_id, installation_parameters_id)
     -- ^ may change later
@@ -306,7 +306,7 @@ CREATE TABLE IF NOT EXISTS vehicle_parameters (
     model varchar(50) NOT NULL,
     vehicle_year int NOT NULL,
     service_iteration_id int NOT NULL,
-    --date_added_to_db date NOT NULL DEFAULT GETDATE(),
+    date_added_to_db timestamp NOT NULL DEFAULT CURRENT_TIMESTAMP,
     CONSTRAINT vehicle_parameters_pk PRIMARY KEY (id),
     CONSTRAINT service_iteration_id_unique UNIQUE (service_iteration_id),
     CONSTRAINT vehicle_parameters_unique UNIQUE (purchasing_parameters_id,
@@ -395,7 +395,7 @@ ALTER TABLE camera_parameters ADD
 code_parameters table:
 */
 -- Reference: code_parameters_purchasing_parameters (table: code_parameters)
-ALTER TABLE _parameters ADD
+ALTER TABLE code_parameters ADD
     FOREIGN KEY (purchasing_parameters_id)
     REFERENCES purchasing_parameters (id)  
     NOT DEFERRABLE 
