@@ -12,9 +12,15 @@ DROP TABLE IF EXISTS base_station_messages;
 DROP TABLE IF EXISTS bag_files;
 DROP TABLE IF EXISTS encoder;
 DROP TABLE IF EXISTS garmin_velocity;
-DROP TABLE IF EXISTS gps_spark_fun_gga;
-DROP TABLE IF EXISTS gps_spark_fun_gst;
-DROP TABLE IF EXISTS gps_spark_fun_vtg;
+DROP TABLE IF EXISTS gps_spark_fun_rear_left_gga;
+DROP TABLE IF EXISTS gps_spark_fun_rear_right_gga;
+DROP TABLE IF EXISTS gps_spark_fun_front_gga;
+DROP TABLE IF EXISTS gps_spark_fun_rear_left_gst;
+DROP TABLE IF EXISTS gps_spark_fun_rear_right_gst;
+DROP TABLE IF EXISTS gps_spark_fun_front_gst;
+DROP TABLE IF EXISTS gps_spark_fun_rear_left_vtg;
+DROP TABLE IF EXISTS gps_spark_fun_rear_right_vtg;
+DROP TABLE IF EXISTS gps_spark_fun_front_vtg;
 DROP TABLE IF EXISTS velodyne_lidar;
 DROP TABLE IF EXISTS ouster_lidar;
 DROP TABLE IF EXISTS trigger;
@@ -51,6 +57,7 @@ CREATE TABLE IF NOT EXISTS encoder (
     id serial NOT NULL,
     bag_files_id int NOT NULL,
     encoder_mode varchar(50)NOT NULL,
+    time real NOT NULL,
     C1 bigint NOT NULL,
     C2 bigint NOT NULL,
     C3 bigint NOT NULL,
@@ -73,14 +80,13 @@ CREATE TABLE IF NOT EXISTS encoder (
 ----------------------------------------------------------------------
 -- Sensor Type: GPS
 ----------------------------------------------------------------------
--- Table: gps_spark_fun_gga
-CREATE TABLE IF NOT EXISTS gps_spark_fun_gga (
+-- Table: gps_spark_fun_rear_left_gga
+CREATE TABLE IF NOT EXISTS gps_spark_fun_rear_left_gga (
     id serial NOT NULL,
     bag_files_id int NOT NULL,
     base_station_messages_id int NOT NULL,
-    gps_gga_postion varchar (10) NOT NULL,
-    gpssecs real NULL,
-    gpsmicrosecs real NULL,
+    gpssecs real NOT NULL,
+    gpsmicrosecs real NOT NULL,
     gpstime real NULL,
     latitude real NOT NULL,
     longitude real NOT NULL,
@@ -93,18 +99,65 @@ CREATE TABLE IF NOT EXISTS gps_spark_fun_gga (
     lock_status int NOT NULL,
     ros_seconds bigint NOT NULL,
     ros_nanoseconds bigint NOT NULL,
-    ros_time real NOT NULL,
+    ros_time real NULL,
     ros_timestamp timestamp NOT NULL,
-    CONSTRAINT gps_spark_fun_gga_pk PRIMARY KEY (id)
+    CONSTRAINT gps_spark_fun_rear_left_gga_pk PRIMARY KEY (id)
 );
 
--- Table: gps_spark_fun_gst
-CREATE TABLE IF NOT EXISTS gps_spark_fun_gst (
+-- Table: gps_spark_fun_rear_right_gga
+CREATE TABLE IF NOT EXISTS gps_spark_fun_rear_right_gga (
     id serial NOT NULL,
     bag_files_id int NOT NULL,
-    gps_gst_postion varchar (10) NOT NULL,
-    gpssecs real NULL,
-    gpsmicrosecs real NULL,
+    base_station_messages_id int NOT NULL,
+    gpssecs real NOT NULL,
+    gpsmicrosecs real NOT NULL,
+    gpstime real NULL,
+    latitude real NOT NULL,
+    longitude real NOT NULL,
+    altitude real NOT NULL,
+    geosep real NOT NULL,
+    nav_mode smallint NOT NULL,
+    num_of_sats int NOT NULL,
+    hdop float NOT NULL,
+    age_of_diff float NOT NULL,
+    lock_status int NOT NULL,
+    ros_seconds bigint NOT NULL,
+    ros_nanoseconds bigint NOT NULL,
+    ros_time real NULL,
+    ros_timestamp timestamp NOT NULL,
+    CONSTRAINT gps_spark_fun_rear_right_gga_pk PRIMARY KEY (id)
+);
+
+-- Table: gps_spark_fun_front_gga
+CREATE TABLE IF NOT EXISTS gps_spark_fun_front_gga (
+    id serial NOT NULL,
+    bag_files_id int NOT NULL,
+    base_station_messages_id int NOT NULL,
+    gpssecs real NOT NULL,
+    gpsmicrosecs real NOT NULL,
+    gpstime real NULL,
+    latitude real NOT NULL,
+    longitude real NOT NULL,
+    altitude real NOT NULL,
+    geosep real NOT NULL,
+    nav_mode smallint NOT NULL,
+    num_of_sats int NOT NULL,_rear_right
+    hdop float NOT NULL,
+    age_of_diff float NOT NULL,
+    lock_status int NOT NULL,
+    ros_seconds bigint NOT NULL,
+    ros_nanoseconds bigint NOT NULL,
+    ros_time real NULL,
+    ros_timestamp timestamp NOT NULL,
+    CONSTRAINT gps_spark_fun_front_gga_pk PRIMARY KEY (id)
+);
+
+-- Table: gps_spark_fun_rear_left_gst
+CREATE TABLE IF NOT EXISTS gps_spark_fun_rear_left_gst (
+    id serial NOT NULL,
+    bag_files_id int NOT NULL,
+    gpssecs real NOT NULL,
+    gpsmicrosecs real NOT NULL,
     gpstime real NULL,
     stdmajor float NOT NULL,
     stdminor float NOT NULL,
@@ -114,25 +167,94 @@ CREATE TABLE IF NOT EXISTS gps_spark_fun_gst (
     stdalt float NOT NULL,
     ros_seconds bigint NOT NULL,
     ros_nanoseconds bigint NOT NULL,
-    ros_time real NOT NULL,
+    ros_time real NULL,
     ros_timestamp timestamp NOT NULL,
-    CONSTRAINT gps_spark_fun_gst_pk PRIMARY KEY (id)
+    CONSTRAINT gps_spark_fun_rear_left_gst_pk PRIMARY KEY (id)
 );
 
--- Table: gps_spark_fun_vtg
-CREATE TABLE IF NOT EXISTS gps_spark_fun_vtg (
+-- Table: gps_spark_fun_rear_right_gst
+CREATE TABLE IF NOT EXISTS gps_spark_fun_rear_right_gst (
     id serial NOT NULL,
     bag_files_id int NOT NULL,
-    gps_vtg_postion varchar (10) NOT NULL,
+    gpssecs real NOT NULL,
+    gpsmicrosecs real NOT NULL,
+    gpstime real NULL,
+    stdmajor float NOT NULL,
+    stdminor float NOT NULL,
+    stdori float NOT NULL,
+    stdlat float NOT NULL,
+    stdlon float NOT NULL,
+    stdalt float NOT NULL,
+    ros_seconds bigint NOT NULL,
+    ros_nanoseconds bigint NOT NULL,
+    ros_time real NULL,
+    ros_timestamp timestamp NOT NULL,
+    CONSTRAINT gps_spark_fun_rear_right_gst_pk PRIMARY KEY (id)
+);
+
+-- Table: gps_spark_fun_front_gst
+CREATE TABLE IF NOT EXISTS gps_spark_fun_front_gst (
+    id serial NOT NULL,
+    bag_files_id int NOT NULL,
+    gpssecs real NOT NULL,
+    gpsmicrosecs real NOT NULL,
+    gpstime real NULL,
+    stdmajor float NOT NULL,
+    stdminor float NOT NULL,
+    stdori float NOT NULL,
+    stdlat float NOT NULL,
+    stdlon float NOT NULL,
+    stdalt float NOT NULL,
+    ros_seconds bigint NOT NULL,
+    ros_nanoseconds bigint NOT NULL,
+    ros_time real NULL,
+    ros_timestamp timestamp NOT NULL,
+    CONSTRAINT gps_spark_fun_front_gst_pk PRIMARY KEY (id)
+);
+
+-- Table: gps_spark_fun_rear_left_vtg
+CREATE TABLE IF NOT EXISTS gps_spark_fun_rear_left_vtg (
+    id serial NOT NULL,
+    bag_files_id int NOT NULL,
     true_track real NOT NULL,
     mag_track real NOT NULL,
     spdovergrndknots real NOT NULL,
     spdovergrndkmph real NOT NULL,
     ros_seconds bigint NOT NULL,
     ros_nanoseconds bigint NOT NULL,
-    ros_time real NOT NULL,
+    ros_time real NULL,
     ros_timestamp timestamp NOT NULL,
-    CONSTRAINT gps_spark_fun_vtg_pk PRIMARY KEY (id)
+    CONSTRAINT gps_spark_fun_rear_left_vtg_pk PRIMARY KEY (id)
+);
+
+-- Table: gps_spark_fun_rear_right_vtg
+CREATE TABLE IF NOT EXISTS gps_spark_fun_rear_right_vtg (
+    id serial NOT NULL,
+    bag_files_id int NOT NULL,
+    true_track real NOT NULL,
+    mag_track real NOT NULL,
+    spdovergrndknots real NOT NULL,
+    spdovergrndkmph real NOT NULL,
+    ros_seconds bigint NOT NULL,
+    ros_nanoseconds bigint NOT NULL,
+    ros_time real NULL,
+    ros_timestamp timestamp NOT NULL,
+    CONSTRAINT gps_spark_fun_rear_right_vtg_pk PRIMARY KEY (id)
+);
+
+-- Table: gps_spark_fun_front_vtg
+CREATE TABLE IF NOT EXISTS gps_spark_fun_front_vtg (
+    id serial NOT NULL,
+    bag_files_id int NOT NULL,
+    true_track real NOT NULL,
+    mag_track real NOT NULL,
+    spdovergrndknots real NOT NULL,
+    spdovergrndkmph real NOT NULL,
+    ros_seconds bigint NOT NULL,
+    ros_nanoseconds bigint NOT NULL,
+    ros_time real NULL,
+    ros_timestamp timestamp NOT NULL,
+    CONSTRAINT gps_spark_fun_front_vtg_pk PRIMARY KEY (id)
 );
 
 ----------------------------------------------------------------------
@@ -262,8 +384,24 @@ ALTER TABLE table_to_change ADD
 ----------------------------------------------------------------------
 -- Base Stations
 ----------------------------------------------------------------------
--- Reference: gps_spark_fun_gga_base_station_messages (table: gps_spark_fun_gga)
-ALTER TABLE gps_spark_fun_gga ADD
+-- Reference: gps_spark_fun_rear_left_gga_base_station_messages (table: gps_spark_fun_rear_left_gga)
+ALTER TABLE gps_spark_fun_rear_left_gga ADD
+    FOREIGN KEY (base_station_messages_id)
+    REFERENCES base_station_messages (id)  
+    NOT DEFERRABLE 
+    INITIALLY IMMEDIATE
+;
+
+-- Reference: gps_spark_fun_rear_right_gga_base_station_messages (table: gps_spark_fun_rear_right_gga)
+ALTER TABLE gps_spark_fun_rear_right_gga ADD
+    FOREIGN KEY (base_station_messages_id)
+    REFERENCES base_station_messages (id)
+    NOT DEFERRABLE 
+    INITIALLY IMMEDIATE
+;
+
+-- Reference: gps_spark_fun_front_gga_base_station_messages (table: gps_spark_fun_front_gga)
+ALTER TABLE gps_spark_fun_front_gga ADD
     FOREIGN KEY (base_station_messages_id)
     REFERENCES base_station_messages (id)  
     NOT DEFERRABLE 
@@ -281,24 +419,72 @@ ALTER TABLE encoder ADD
     INITIALLY IMMEDIATE
 ;
 
--- Reference: gps_spark_fun_gga_bag_files (table: gps_spark_fun_gga)
-ALTER TABLE gps_spark_fun_gga ADD
+-- Reference: gps_spark_fun_rear_left_gga_bag_files (table: gps_spark_fun_rear_left_gga)
+ALTER TABLE gps_spark_fun_rear_left_gga ADD
     FOREIGN KEY (bag_files_id)
     REFERENCES bag_files (id)  
     NOT DEFERRABLE 
     INITIALLY IMMEDIATE
 ;
 
--- Reference: gps_spark_fun_gst_bag_files (table: gps_spark_fun_gst)
-ALTER TABLE gps_spark_fun_gst ADD
+-- Reference: gps_spark_fun_rear_right_gga_bag_files (table: gps_spark_fun_rear_right_gga)
+ALTER TABLE gps_spark_fun_rear_right_gga ADD
     FOREIGN KEY (bag_files_id)
     REFERENCES bag_files (id)  
     NOT DEFERRABLE 
     INITIALLY IMMEDIATE
 ;
 
--- Reference: gps_spark_fun_vtg_bag_files (table: gps_spark_fun_vtg)
-ALTER TABLE gps_spark_fun_vtg ADD
+-- Reference: gps_spark_fun_front_gga_bag_files (table: gps_spark_fun_front_gga)
+ALTER TABLE gps_spark_fun_front_gga ADD
+    FOREIGN KEY (bag_files_id)
+    REFERENCES bag_files (id)  
+    NOT DEFERRABLE 
+    INITIALLY IMMEDIATE
+;
+
+-- Reference: gps_spark_fun_rear_left_gst_bag_files (table: gps_spark_fun_rear_left_gst)
+ALTER TABLE gps_spark_fun_rear_left_gst ADD
+    FOREIGN KEY (bag_files_id)
+    REFERENCES bag_files (id)  
+    NOT DEFERRABLE 
+    INITIALLY IMMEDIATE
+;
+
+-- Reference: gps_spark_fun_rear_right_gst_bag_files (table: gps_spark_fun_rear_right_gst)
+ALTER TABLE gps_spark_fun_rear_right_gst ADD
+    FOREIGN KEY (bag_files_id)
+    REFERENCES bag_files (id)  
+    NOT DEFERRABLE 
+    INITIALLY IMMEDIATE
+;
+
+-- Reference: gps_spark_fun_front_gst_bag_files (table: gps_spark_fun_front_gst)
+ALTER TABLE gps_spark_fun_front_gst ADD
+    FOREIGN KEY (bag_files_id)
+    REFERENCES bag_files (id)  
+    NOT DEFERRABLE 
+    INITIALLY IMMEDIATE
+;
+
+-- Reference: gps_spark_fun_rear_left_vtg_bag_files (table: gps_spark_fun_rear_left_vtg)
+ALTER TABLE gps_spark_fun_rear_left_vtg ADD
+    FOREIGN KEY (bag_files_id)
+    REFERENCES bag_files (id)  
+    NOT DEFERRABLE 
+    INITIALLY IMMEDIATE
+;
+
+-- Reference: gps_spark_fun_rear_right_vtg_bag_files (table: gps_spark_fun_rear_right_vtg)
+ALTER TABLE gps_spark_fun_rear_right_vtg ADD
+    FOREIGN KEY (bag_files_id)
+    REFERENCES bag_files (id)  
+    NOT DEFERRABLE 
+    INITIALLY IMMEDIATE
+;
+
+-- Reference: gps_spark_fun_front_vtg_bag_files (table: gps_spark_fun_front_vtg)
+ALTER TABLE gps_spark_fun_front_vtg ADD
     FOREIGN KEY (bag_files_id)
     REFERENCES bag_files (id)  
     NOT DEFERRABLE 
