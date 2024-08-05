@@ -11,7 +11,6 @@ Note: At this point, the only point of the base_station_messages table is to hol
 DROP TABLE IF EXISTS base_station_messages;
 DROP TABLE IF EXISTS bag_files;
 DROP TABLE IF EXISTS encoder;
-DROP TABLE IF EXISTS garmin_velocity;
 DROP TABLE IF EXISTS gps_spark_fun_rear_left_gga;
 DROP TABLE IF EXISTS gps_spark_fun_rear_right_gga;
 DROP TABLE IF EXISTS gps_spark_fun_front_gga;
@@ -57,7 +56,7 @@ CREATE TABLE IF NOT EXISTS encoder (
     id serial NOT NULL,
     bag_files_id int NOT NULL,
     encoder_mode varchar(50)NOT NULL,
-    time real NOT NULL,
+    encoder_time real NOT NULL,
     C1 bigint NOT NULL,
     C2 bigint NOT NULL,
     C3 bigint NOT NULL,
@@ -87,7 +86,7 @@ CREATE TABLE IF NOT EXISTS gps_spark_fun_rear_left_gga (
     base_station_messages_id int NOT NULL,
     gpssecs real NOT NULL,
     gpsmicrosecs real NOT NULL,
-    gpstime real NULL,
+    gpstime real NOT NULL,
     latitude real NOT NULL,
     longitude real NOT NULL,
     altitude real NOT NULL,
@@ -99,7 +98,7 @@ CREATE TABLE IF NOT EXISTS gps_spark_fun_rear_left_gga (
     lock_status int NOT NULL,
     ros_seconds bigint NOT NULL,
     ros_nanoseconds bigint NOT NULL,
-    ros_time real NULL,
+    ros_time real NOT NULL,
     ros_timestamp timestamp NOT NULL,
     CONSTRAINT gps_spark_fun_rear_left_gga_pk PRIMARY KEY (id)
 );
@@ -111,7 +110,7 @@ CREATE TABLE IF NOT EXISTS gps_spark_fun_rear_right_gga (
     base_station_messages_id int NOT NULL,
     gpssecs real NOT NULL,
     gpsmicrosecs real NOT NULL,
-    gpstime real NULL,
+    gpstime real NOT NULL,
     latitude real NOT NULL,
     longitude real NOT NULL,
     altitude real NOT NULL,
@@ -123,7 +122,7 @@ CREATE TABLE IF NOT EXISTS gps_spark_fun_rear_right_gga (
     lock_status int NOT NULL,
     ros_seconds bigint NOT NULL,
     ros_nanoseconds bigint NOT NULL,
-    ros_time real NULL,
+    ros_time real NOT NULL,
     ros_timestamp timestamp NOT NULL,
     CONSTRAINT gps_spark_fun_rear_right_gga_pk PRIMARY KEY (id)
 );
@@ -135,19 +134,19 @@ CREATE TABLE IF NOT EXISTS gps_spark_fun_front_gga (
     base_station_messages_id int NOT NULL,
     gpssecs real NOT NULL,
     gpsmicrosecs real NOT NULL,
-    gpstime real NULL,
+    gpstime real NOT NULL,
     latitude real NOT NULL,
     longitude real NOT NULL,
     altitude real NOT NULL,
     geosep real NOT NULL,
     nav_mode smallint NOT NULL,
-    num_of_sats int NOT NULL,_rear_right
+    num_of_sats int NOT NULL,
     hdop float NOT NULL,
     age_of_diff float NOT NULL,
     lock_status int NOT NULL,
     ros_seconds bigint NOT NULL,
     ros_nanoseconds bigint NOT NULL,
-    ros_time real NULL,
+    ros_time real NOT NULL,
     ros_timestamp timestamp NOT NULL,
     CONSTRAINT gps_spark_fun_front_gga_pk PRIMARY KEY (id)
 );
@@ -158,7 +157,7 @@ CREATE TABLE IF NOT EXISTS gps_spark_fun_rear_left_gst (
     bag_files_id int NOT NULL,
     gpssecs real NOT NULL,
     gpsmicrosecs real NOT NULL,
-    gpstime real NULL,
+    gpstime real NOT NULL,
     stdmajor float NOT NULL,
     stdminor float NOT NULL,
     stdori float NOT NULL,
@@ -167,7 +166,7 @@ CREATE TABLE IF NOT EXISTS gps_spark_fun_rear_left_gst (
     stdalt float NOT NULL,
     ros_seconds bigint NOT NULL,
     ros_nanoseconds bigint NOT NULL,
-    ros_time real NULL,
+    ros_time real NOT NULL,
     ros_timestamp timestamp NOT NULL,
     CONSTRAINT gps_spark_fun_rear_left_gst_pk PRIMARY KEY (id)
 );
@@ -178,7 +177,7 @@ CREATE TABLE IF NOT EXISTS gps_spark_fun_rear_right_gst (
     bag_files_id int NOT NULL,
     gpssecs real NOT NULL,
     gpsmicrosecs real NOT NULL,
-    gpstime real NULL,
+    gpstime real NOT NULL,
     stdmajor float NOT NULL,
     stdminor float NOT NULL,
     stdori float NOT NULL,
@@ -187,7 +186,7 @@ CREATE TABLE IF NOT EXISTS gps_spark_fun_rear_right_gst (
     stdalt float NOT NULL,
     ros_seconds bigint NOT NULL,
     ros_nanoseconds bigint NOT NULL,
-    ros_time real NULL,
+    ros_time real NOT NULL,
     ros_timestamp timestamp NOT NULL,
     CONSTRAINT gps_spark_fun_rear_right_gst_pk PRIMARY KEY (id)
 );
@@ -198,7 +197,7 @@ CREATE TABLE IF NOT EXISTS gps_spark_fun_front_gst (
     bag_files_id int NOT NULL,
     gpssecs real NOT NULL,
     gpsmicrosecs real NOT NULL,
-    gpstime real NULL,
+    gpstime real NOT NULL,
     stdmajor float NOT NULL,
     stdminor float NOT NULL,
     stdori float NOT NULL,
@@ -207,7 +206,7 @@ CREATE TABLE IF NOT EXISTS gps_spark_fun_front_gst (
     stdalt float NOT NULL,
     ros_seconds bigint NOT NULL,
     ros_nanoseconds bigint NOT NULL,
-    ros_time real NULL,
+    ros_time real NOT NULL,
     ros_timestamp timestamp NOT NULL,
     CONSTRAINT gps_spark_fun_front_gst_pk PRIMARY KEY (id)
 );
@@ -220,9 +219,9 @@ CREATE TABLE IF NOT EXISTS gps_spark_fun_rear_left_vtg (
     mag_track real NOT NULL,
     spdovergrndknots real NOT NULL,
     spdovergrndkmph real NOT NULL,
-    ros_seconds bigint NOT NULL,
-    ros_nanoseconds bigint NOT NULL,
-    ros_time real NULL,
+    ros_seconds bigint NULL,
+    ros_nanoseconds bigint NULL,
+    ros_time real NOT NULL,
     ros_timestamp timestamp NOT NULL,
     CONSTRAINT gps_spark_fun_rear_left_vtg_pk PRIMARY KEY (id)
 );
@@ -235,9 +234,9 @@ CREATE TABLE IF NOT EXISTS gps_spark_fun_rear_right_vtg (
     mag_track real NOT NULL,
     spdovergrndknots real NOT NULL,
     spdovergrndkmph real NOT NULL,
-    ros_seconds bigint NOT NULL,
-    ros_nanoseconds bigint NOT NULL,
-    ros_time real NULL,
+    ros_seconds bigint NULL,
+    ros_nanoseconds bigint NULL,
+    ros_time real NOT NULL,
     ros_timestamp timestamp NOT NULL,
     CONSTRAINT gps_spark_fun_rear_right_vtg_pk PRIMARY KEY (id)
 );
@@ -250,9 +249,9 @@ CREATE TABLE IF NOT EXISTS gps_spark_fun_front_vtg (
     mag_track real NOT NULL,
     spdovergrndknots real NOT NULL,
     spdovergrndkmph real NOT NULL,
-    ros_seconds bigint NOT NULL,
-    ros_nanoseconds bigint NOT NULL,
-    ros_time real NULL,
+    ros_seconds bigint NULL,
+    ros_nanoseconds bigint NULL,
+    ros_time real NOT NULL,
     ros_timestamp timestamp NOT NULL,
     CONSTRAINT gps_spark_fun_front_vtg_pk PRIMARY KEY (id)
 );
