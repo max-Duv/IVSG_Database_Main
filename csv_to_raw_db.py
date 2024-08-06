@@ -11,15 +11,13 @@ Note: to install polars...
 Note: STILL NEEDS MORE TESTING
 
 To-Do:
-    - Fix select function
-    - Continue testing with multiple CSV files (of different sensor types)
-    - Insert into base_station_messages and bag_files table -> select from -> use those returned variables
-    
-    - Add in columns for ros_time and gps_time
-    - Turn rosbagTimestamp into actual timestamp
-
-    - Test not using sqlalchemy part
-    - Test simplfing path to csv
+    1. (IN PROGRESS) Fix select function
+    2. (IN PROGRESS) Continue testing with multiple CSV files (of different sensor types)
+    3. (IN PROGRESS) Insert into base_station_messages and bag_files table -> select from -> use those returned variables
+    4. (IN PROGRESS) Add in columns for ros_time and gps_time
+    5. (IN PROGRESS) Test not using sqlalchemy part
+    6, (IN PROGRESS) Test simplfing path to csv
+    7. (IN PROGRESS) Turn rosbagTimestamp into actual timestamp
 '''
 
 import psycopg2
@@ -34,7 +32,7 @@ import warnings
 import pdb
 
 from io import StringIO                # For writting the csv buffer
-from sqlalchemy import create_engine   # Will need to use both sqlalchemy and psycopg2 (might try to get rid of this step later)
+#from sqlalchemy import create_engine   # Will need to use both sqlalchemy and psycopg2 (might try to get rid of this step later)
 
 
 
@@ -82,41 +80,32 @@ class Database:
             self.printErrors(error = e, message = "Unable to insert to the database.")
 
     # Simple select function
-    def select_from_db(self, table_name, col_lst, val_lst):
+    def select_from_db(self, table_name, col, val):
         try:
-            cols = ','.join(col_lst)
-            val = val_lst[0]
-            #vals = ','.join(['%s'] * len(val_lst))
+            # col = col_lst[0]
+            # val = val_lst[0]
+            # vals = ','.join(['%s'] * len(val_lst))
 
-            select_query = f'SELECT bag_file_name FROM {table_name} WHERE id = 1;'
-            self.cursor.execute(select_query)
+            select_query2 = f'SELECT bag_file_name FROM {table_name} WHERE id = 1;'
+            select_query = f'SELECT id FROM {table_name} WHERE {col} = {val};'
+            self.cursor.execute(select_query2)
 
             val_id = self.cursor.fetchone()[0]
+            x = [i for i in val_id]
+            print(x)
 
             if val_id:
                 return val_id
             else:
-                self.insert_and_return(table_name, col_lst, val_lst)
+                col_lst = [col]
+                val_lst = [val]
+                new_id = self.insert_and_return(table_name, col_lst, val_lst)
+                return new_id
 
         except psycopg2.Error as e:
             self.printErrors(error = e, message = "Unable to select from the database.")
 
-    #
-    def get_id_lst(self, table_name, col_name, vals):
-        val_lst = []
-
-        try:
-            for val in vals:
-                val_id = self.select_from_db(table_name, col_name, val)
-                val_lst.append(val_id)
-
-        except psycopg2.Error as e:
-            self.printErrors(error = e, message = "Unable to select from the database.")
-
-        return val_lst
-
-
-    # Create a dataframe in the Pandas or Polars library from the CSV file
+    # Create a dataframe in the Pandas or Polars library from the CSV file. Edit the dataframe to align with the database table.
     def create_df(self, table_name, file, is_sensor, csv_col_lst, sql_col_lst, bag_files_id, base_station_messages_id):
         try:
             # Using pandas to read certain columns from the csv file
@@ -125,78 +114,74 @@ class Database:
             # Using polars instead of pandas
             df = pl.read_csv(file, columns = csv_col_lst, separator = "\t")
 
-            print(1)
+            print("Used Polars to read the csv file.")
+
+            old_columns = df.columns
             
             if (is_sensor == 1):
                 bag_file_column = pl.Series("bag_files_id", [bag_files_id] * df.height)
                 df = df.with_column(bag_file_column)
-                print(2)
+                print("New column for bag_files added")
 
                 exp = 10^9
                 ros_time_column = pl.Series((pl.col('secs') + pl.col('nsecs')) * exp).alias('ros_time')
                 df = df.with_column(ros_time_column)
+                print("New column for ros_time added")
+
+                '''
+                # Turn the rosbagTimestamp into a datatime value by first turning into seconds, then converting to datatime
+                df = df.with_column ((pl.col("rosbagTimestamp")/1000).cast(pl.Int64)
+                    .apply(lambda x: datetime.datetime.fromtimestamp(x))
+                    .alias("ros_timestamp"))
+                '''
 
                 if (table_name == 'gps_spark_fun_rear_left_gga' or table_name == 'gps_spark_fun_rear_right_gga' or table_name == 'gps_spark_fun_front_gga' or
                     table_name == 'gps_spark_fun_rear_left_gst' or table_name == 'gps_spark_fun_rear_right_gst' or table_name == 'gps_spark_fun_front_gst'):
                     gpstime_column = pl.Series((pl.col('GPSSecs') + pl.col('GPSMicroSecs')) * exp).alias('gpstime')
                     df = df.with_column(gpstime_column)
+                    print("New column for gpstime added")
 
                 if (table_name == 'gps_spark_fun_rear_left_gga' or table_name == 'gps_spark_fun_rear_right_gga' or table_name == 'gps_spark_fun_front_gga'):
+                    base_station_id_lst = []
+                    
                     last_column = df.columns[-1]
                     last_column_vals = df[pl.col(last_column)].to_pandas()[last_column].tolist()
-                    base_station_id_lst = self.get_id_lst('base_station_messages', 'base_station_name', last_column_vals)
+
+                    for val in last_column_vals:
+                        val_id = self.select_from_db('base_station_messages', 'base_station_name', val)
+                        base_station_id_lst.append(val_id)
 
                     base_station_id_column = pl.Series('base_station_messages_id', base_station_id_lst)
                     df = df.with_column(base_station_id_column)
-            '''
-            ["bag_files_id", "base_station_messages_id",
-                       "gpssecs", "gpsmicrosecs", "gpstime"
-                       "latitude", "longitude", "altitude",
-                       "geosep", "nav_mode", "num_of_sats",
-                       "hdop", "age_of_diff", "lock_status",
-                       "ros_seconds", "ros_nanoseconds", "ros_time", "ros_timestamp"]
-            '''
+                    print("New column for base_station_ids added")
+            
             columns = df.columns
-            print(columns)
+
+            print("Old Columns")
+            print(list(old_columns.values))
+
+            print("Updated Columns")
+            print(list(columns.values))
 
             '''
-            rosbag_timestamp_column = columns[1]
-            secs_column = columns[2]
-            nsecs_column = columns[3]
-            remaining_columns = columns[4:]
-
-            new_column_order = [bag_file_column] + remaining_columns + [secs_column] + [nsecs_column] + [rosbag_timestamp_column]
-            df = df.select(new_column_order)
-            '''
-                
-            '''
-            # Insert a new column
-            new_column = pl.Series("new_col", [1, 2, 3])  # Adjust the data as needed
-            df = df.with_column(new_column)
-
-            # Move an existing column
-            column_to_move = "existing_col"
-            columns = df.columns
-            new_order = [column_to_move] + [col for col in columns if col != column_to_move]
-
-            # Reorder columns in DataFrame
-            df = df.select(new_order)
-            '''
-
-            # Ensure uniformity between the datafram columns and the db table columns
-            ''''
+            # Ensure uniformity between the dataframe columns and the db table columns
             if (len(sql_col_lst) == len(df.columns)):
                 df = df.rename(dict(zip(df.columns, sql_col_lst)))
                 df = df.rename({col: col.lower() for col in df.columns})
 
             print(list(df.columns.values))
+            '''
 
+            '''
+            new_column_order = sql_col_lst
+            df = df.select(new_column_order)
+                
             # For each table, print the first two rows
             print(f"First contents of '{table_name}' CSV file: ")
             print(df.head(2))
+            '''
 
             return df
-            '''
 
         except:
             print("Error creating dataframe.")
@@ -281,7 +266,6 @@ def determine_columns(table_name):
                        "Latitude", "Longitude", "Altitude",
                        "GeoSep", "NavMode", "NumOfSats",
                        "HDOP", "AgeOfDiff", "LockStatus" 
-                       
                        ]
         sql_col_lst = ["bag_files_id", "base_station_messages_id",
                        "gpssecs", "gpsmicrosecs", "gpstime"
