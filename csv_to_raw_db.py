@@ -1,5 +1,7 @@
 '''
-The purpose of this script is to efficiently bulk insert to the Postgres database from a CSV file using copy_expert.
+The purpose of this script is to efficiently bulk insert to the Postgres database from a CSV file using copy_expert and the Polars library.
+
+Use with csv_to_sql_columns.py script.
 
 Note: to install polars...
     pip install connectorx
@@ -8,16 +10,12 @@ Note: to install polars...
 
     (May need to use: python3 -m pip install <package-name> --break-system-packages)
 
-Note: STILL NEEDS MORE TESTING
+Update:
+    - Updated to mainly use Polars to properly edit the dataframe to inlcude new columns and match the layout of the corresponding database table.
+    - The script works with at least the trigger CSV file. More testing is needed for the different sensor types, particularly with the GPS SparkFun.     
 
 To-Do:
-    1. (IN PROGRESS) Fix select function
-    2. (IN PROGRESS) Continue testing with multiple CSV files (of different sensor types)
-    3. (IN PROGRESS) Insert into base_station_messages and bag_files table -> select from -> use those returned variables
-    4. (IN PROGRESS) Add in columns for ros_time and gps_time
-    5. (IN PROGRESS) Test not using sqlalchemy part
-    6, (IN PROGRESS) Test simplfing path to csv
-    7. (IN PROGRESS) Turn rosbagTimestamp into actual timestamp
+    1. (IN PROGRESS) Continue testing with multiple CSV files (of different sensor types)
 '''
 
 import psycopg2
@@ -31,8 +29,8 @@ import traceback
 import warnings
 import pdb
 
-from io import StringIO                # For writting the csv buffer
-#from sqlalchemy import create_engine   # Will need to use both sqlalchemy and psycopg2 (might try to get rid of this step later)
+from io import StringIO                            # For writting the csv buffer
+from csv_to_sql_columns import determine_columns   # Keep records of different column names (for CSV and SQL) here to simplify script
 
 
 
@@ -48,8 +46,8 @@ class Database:
         try:
             # Creating an engine through sqlalchmey, these same parameters will be used for polars
             # Template: "postgresql://username:password@server:port/db_name"
-            #self.postgres_url = "postgresql://" + username + ":" + password + "@" + server + ":" + port + "/" + db_name
-            #self.engine = create_engine(self.postgres_url)
+            self.postgres_url = "postgresql://" + username + " :" + password + "@" + server + " :" + port + "/" + db_name
+            #self.engine = self.postgres_url
 
             #Connecting and setting up a cursor through psycopg2
             self.conn = psycopg2.connect(database = db_name, 
@@ -70,7 +68,7 @@ class Database:
             cols = ','.join(col_lst)
             vals = ','.join(['%s'] * len(val_lst))
 
-            insert_query = f'INSERT INTO {table_name} ({cols}) VALUES ({vals}) RETURNING id;'
+            insert_query = f"INSERT INTO {table_name} ({cols}) VALUES ({vals}) RETURNING id;"
             self.cursor.execute(insert_query, val_lst)
 
             inserted_id = self.cursor.fetchone()[0]
@@ -82,65 +80,55 @@ class Database:
     # Simple select function
     def select_from_db(self, table_name, col, val):
         try:
-            # col = col_lst[0]
-            # val = val_lst[0]
-            # vals = ','.join(['%s'] * len(val_lst))
+            select_query = f"SELECT id FROM {table_name} WHERE {col} = '{val}';"
+            self.cursor.execute(select_query)
 
-            select_query2 = f'SELECT bag_file_name FROM {table_name} WHERE id = 1;'
-            select_query = f'SELECT id FROM {table_name} WHERE {col} = {val};'
-            self.cursor.execute(select_query2)
+            result = self.cursor.fetchone()
 
-            val_id = self.cursor.fetchone()[0]
-            x = [i for i in val_id]
-            print(x)
-
-            if val_id:
-                return val_id
-            else:
+            if (result is None):
                 col_lst = [col]
                 val_lst = [val]
-                new_id = self.insert_and_return(table_name, col_lst, val_lst)
-                return new_id
+                return_id = self.insert_and_return(table_name, col_lst, val_lst)
+            
+            else:
+                return_id = result[0]
+            
+            return return_id
 
         except psycopg2.Error as e:
             self.printErrors(error = e, message = "Unable to select from the database.")
 
     # Create a dataframe in the Pandas or Polars library from the CSV file. Edit the dataframe to align with the database table.
-    def create_df(self, table_name, file, is_sensor, csv_col_lst, sql_col_lst, bag_files_id, base_station_messages_id):
+    def create_df(self, table_name, file, is_sensor, csv_col_dict, sql_col_lst, mapping_dict, bag_files_id):
         try:
             # Using pandas to read certain columns from the csv file
             # df = pd.read_csv(file_path, sep = "\t", usecols = csv_col_lst)
 
-            # Using polars instead of pandas
+            # Using polars instead of pandas to read from the CSV file and create a dataframe
+            csv_col_lst = list(csv_col_dict.keys())
             df = pl.read_csv(file, columns = csv_col_lst, separator = "\t")
-
             print("Used Polars to read the csv file.")
-
-            old_columns = df.columns
             
+            # All sensors have a column for bag files and rostimes, add and fill those columns here
             if (is_sensor == 1):
-                bag_file_column = pl.Series("bag_files_id", [bag_files_id] * df.height)
-                df = df.with_column(bag_file_column)
+                bag_file_column = pl.Series('bag_files_id', [bag_files_id] * df.height, dtype =  pl.Int32)
+                df = df.with_columns(bag_file_column)
                 print("New column for bag_files added")
 
-                exp = 10^9
-                ros_time_column = pl.Series((pl.col('secs') + pl.col('nsecs')) * exp).alias('ros_time')
-                df = df.with_column(ros_time_column)
+                # ros_time = secs + nsecs * 10^-9
+                # gpstime = gpssecs + gpsnsecs * 10^-9
+                exp = 10**(-9)
+                ros_time_column = ((pl.col('secs') + pl.col('nsecs') * exp).cast(pl.Float32).alias('ros_time'))
+                df = df.with_columns(ros_time_column)
                 print("New column for ros_time added")
-
-                '''
-                # Turn the rosbagTimestamp into a datatime value by first turning into seconds, then converting to datatime
-                df = df.with_column ((pl.col("rosbagTimestamp")/1000).cast(pl.Int64)
-                    .apply(lambda x: datetime.datetime.fromtimestamp(x))
-                    .alias("ros_timestamp"))
-                '''
 
                 if (table_name == 'gps_spark_fun_rear_left_gga' or table_name == 'gps_spark_fun_rear_right_gga' or table_name == 'gps_spark_fun_front_gga' or
                     table_name == 'gps_spark_fun_rear_left_gst' or table_name == 'gps_spark_fun_rear_right_gst' or table_name == 'gps_spark_fun_front_gst'):
-                    gpstime_column = pl.Series((pl.col('GPSSecs') + pl.col('GPSMicroSecs')) * exp).alias('gpstime')
-                    df = df.with_column(gpstime_column)
+                    gpstime_column = ((pl.col('GPSSecs') + pl.col('GPSMicroSecs') * exp).cast(pl.Float32).alias('gpstime'))
+                    df = df.with_columns(gpstime_column)
                     print("New column for gpstime added")
 
+                # GGA sensor has a column for base station - access the SQL database for this, return the id of the base station
                 if (table_name == 'gps_spark_fun_rear_left_gga' or table_name == 'gps_spark_fun_rear_right_gga' or table_name == 'gps_spark_fun_front_gga'):
                     base_station_id_lst = []
                     
@@ -152,60 +140,64 @@ class Database:
                         base_station_id_lst.append(val_id)
 
                     base_station_id_column = pl.Series('base_station_messages_id', base_station_id_lst)
-                    df = df.with_column(base_station_id_column)
+                    df = df.with_columns(base_station_id_column)
                     print("New column for base_station_ids added")
-            
-            columns = df.columns
 
+            '''
+            # Check How Data Frame Has Changed
             print("Old Columns")
-            print(list(old_columns.values))
+            print(list(old_columns))
 
             print("Updated Columns")
-            print(list(columns.values))
-
-            '''
-            # Ensure uniformity between the dataframe columns and the db table columns
-            if (len(sql_col_lst) == len(df.columns)):
-                df = df.rename(dict(zip(df.columns, sql_col_lst)))
-                df = df.rename({col: col.lower() for col in df.columns})
-
-            print(list(df.columns.values))
-            '''
-
-            '''
-            new_column_order = sql_col_lst
-            df = df.select(new_column_order)
-                
-            # For each table, print the first two rows
-            print(f"First contents of '{table_name}' CSV file: ")
+            print(list(df.columns))
             print(df.head(2))
             '''
+            
+            # Ensure uniformity between the dataframe columns and the db table columns. Changing the names and reordering to match SQL setup
+            if (len(sql_col_lst) != len(df.columns)):
+                print("Error, the number of data frame columns is not the same as the number of database table columns.")
+            
+            else:
+                # Ensure datatypes are the same, otherwise you won't be able to insert
+                for key, value in csv_col_dict.items():
+                    df = df.with_columns([pl.col(key).cast(value)])
 
+                df = df.rename(mapping_dict)
+                df = df.rename({col: col.lower() for col in df.columns})
+
+                new_column_order = sql_col_lst
+                df = df.select(new_column_order)
+                #print(list(df.columns))
+                    
+                # For each table, print the first two rows
+                print(f"First contents of '{table_name}' CSV file: ")
+                print(df.head(2))
+            
             return df
 
         except:
-            print("Error creating dataframe.")
+            print("Error creating data frame.")
 
+    # This function will write the dataframe into the database using copy_expert
     def csv_to_db(self, table_name, df, sql_col_lst):
         try:
-
-            # Convert the dataframe into a CSV string to work with copy_expert
+            # Convert the dataframe into a pandas dataframe and then into a CSV string to work with copy_expert
+            pandas_df = df.to_pandas()
             csv_buffer = StringIO()
-            df.write_csv(file = csv_buffer, has_header = False, sep = ',')
+            pandas_df.to_csv(csv_buffer, index=False, header=True, sep=",")
             csv_buffer.seek(0)   # Rewind the buffer to the beginning for reading
-            # print(csv_buffer.read())
+            #print(csv_buffer.read())
 
-            # Build the query statement
-            query_fillin = table_name + " (" + ", ".join(sql_col_lst) + ") "
-            query = '''COPY {} FROM STDIN WITH CSV NULL AS 'NULL' '''.format(query_fillin)
+            # Build the query
+            query_fillin = f"{table_name} ({', '.join(sql_col_lst)})"
+            query = f"COPY {query_fillin} FROM STDIN WITH CSV HEADER NULL AS 'NULL'"
  
             # Use copy_expert to transport data into the database
             self.cursor.copy_expert(sql = query, file = csv_buffer)
-
             print("CSV successfully inserted into database.")
 
-        except Exception as e:
-            self.printErrors(error = e, message = "Error inserting CSV into database.")
+        except:
+            print("Error inserting CSV into database.")
 
     # A function to disconnect from the postgres server
     def disconnect(self):
@@ -225,113 +217,6 @@ class Database:
         print(traceback.format_exc())
 
 '''
-This function will take a table name and return whether or not the table involves a sensor,
-the columns to take from the CSV file and the columns to insert for the Postgres database.
-Currently only for the encoder, GPS SparkFun and 3D LiDAR tables. Columns may be changed as needed.
-'''
-def determine_columns(table_name):
-    # Table: base_station_messages
-    if (table_name == 'base_station_messages'):
-        is_sensor = 0
-        csv_col_lst = ["base_station_name", "base_station_message"]
-        sql_col_lst = ["base_station_name", "base_station_message"]
-
-    # Table: bag_files
-    elif (table_name == 'bag_files'):
-        is_sensor = 0
-        csv_col_lst = ["bag_files_id"]
-        sql_col_lst = ["bag_files_id"]
-
-    # Table: encoder
-    elif (table_name == 'encoder'):
-        is_sensor = 1
-        csv_col_lst = ["rosbagTimestamp", "secs", "nsecs", "mode", "time"
-                       "C1", "C2", "C3", "C4", "P1", "E1",
-                       "err_wrong_element_length" "err_bad_element_structure",
-                       "err_failed_time", "err_bad_uppercase_character",
-                       "err_bad_lowercase_character", "err_bad_character"
-                       ]
-        sql_col_lst = ["bag_files_id", "encoder_mode", "time",
-                       "c1", "c2", "c3", "c4", "p1", "e1",
-                       "err_wrong_element_length" "err_bad_element_structure",
-                       "err_failed_time", "err_bad_uppercase_character",
-                       "err_bad_lowercase_character", "err_bad_character",
-                       "ros_seconds", "ros_nanoseconds", "ros_time", "ros_timestamp"]
-
-    # Table: gps_spark_fun_gga (left, right, or front)
-    elif (table_name == 'gps_spark_fun_rear_left_gga' or table_name == 'gps_spark_fun_rear_right_gga' or table_name == 'gps_spark_fun_front_gga'):
-        is_sensor = 1
-        csv_col_lst = ["rosbagTimestamp", "secs", "nsecs",
-                       "GPSSecs", "GPSMicroSecs",
-                       "Latitude", "Longitude", "Altitude",
-                       "GeoSep", "NavMode", "NumOfSats",
-                       "HDOP", "AgeOfDiff", "LockStatus" 
-                       ]
-        sql_col_lst = ["bag_files_id", "base_station_messages_id",
-                       "gpssecs", "gpsmicrosecs", "gpstime"
-                       "latitude", "longitude", "altitude",
-                       "geosep", "nav_mode", "num_of_sats",
-                       "hdop", "age_of_diff", "lock_status",
-                       "ros_seconds", "ros_nanoseconds", "ros_time", "ros_timestamp"]
-
-    # Table: gps_spark_fun_gst (left, right, or front)
-    elif (table_name == 'gps_spark_fun_rear_left_gst' or table_name == 'gps_spark_fun_rear_right_gst' or table_name == 'gps_spark_fun_front_gst'):
-        is_sensor = 1
-        csv_col_lst = ["rosbagTimestamp", "secs", "nsecs",
-                       "GPSSecs", "GPSMicroSecs",
-                       "StdMajor", "StdMinor", "StdOri",
-                       "StdLat", "StdLon", "StdAlt", 
-                       
-                       ]
-        sql_col_lst = ["bag_files_id", "gpssecs", "gpsmicrosecs", "gpstime"
-                       "stdmajor", "stdminor", "stdori",
-                       "stdlat", "stdlon", "stdalt",
-                       "ros_seconds", "ros_nanoseconds", "ros_time", "ros_timestamp"]
-
-    # Table: gps_spark_fun_vtg (left, right, or front)
-    elif (table_name == 'gps_spark_fun_rear_left_vtg' or table_name == 'gps_spark_fun_rear_right_vtg' or table_name == 'gps_spark_fun_front_vtg'):
-        is_sensor = 1
-        csv_col_lst = ["rosbagTimestamp", "secs", "nsecs",
-                       "TrueTrack", "MagTrack", 
-                       "SpdOverGrndKnots", "SpdOverGrndKmph"
-                       ]
-        sql_col_lst = ["bag_files_id", "true_track", "mag_track",
-                       "spdovergrndknots", "spdovergrndkmph",
-                       "ros_seconds", "ros_nanoseconds", "ros_time", "ros_timestamp"]
-
-    # Table: velodyne_lidar and ouster_lidar
-    elif (table_name == 'velodyne_lidar' or table_name == "ouster_lidar" ):
-        is_sensor = 1
-        csv_col_lst = ["bag_files_id", 
-                       "ouster_lidar_hash_tag", "ouster_lidar_location",
-                       "ouster_lidar_file_size", "ouster_lidar_file_time",
-                       "ros_seconds", "ros_nanoseconds", "ros_timestamp"]
-        sql_col_lst = ["bag_files_id", 
-                       "ouster_lidar_hash_tag", "ouster_lidar_location",
-                       "ouster_lidar_file_size", "ouster_lidar_file_time",
-                       "ros_seconds", "ros_nanoseconds", "ros_time", "ros_timestamp"]
-
-    # Table: trigger
-    elif (table_name == 'trigger'):
-        is_sensor = 1
-        csv_col_lst = ["rosbagTimestamp", "secs", "nsecs",
-                       "mode", "mode_counts",
-                       "adjone", "adjtwo", "adjthree",
-                       "err_failed_mode_count", "err_failed_XI_format", "err_failed_checkInformation",
-                       "err_trigger_unknown_error_occured", "err_bad_uppercase_character",
-                       "err_bad_lowercase_character", "err_bad_three_adj_element",
-                       "err_bad_first_element", "err_bad_character", "err_wrong_element_length",]
-        sql_col_lst = ["bag_files_id", "trigger_mode", "trigger_mode_counts",
-                       "adjone", "adjtwo", "adjthree",
-                       "err_failed_mode_count", "err_failed_xi_format", "err_failed_check_information",
-                       "err_trigger_unknown_error_occured", "err_bad_uppercase_character",
-                       "err_bad_lowercase_character", "err_bad_three_adj_element",
-                       "err_bad_first_element", "err_bad_character", "err_wrong_element_length",
-                       "ros_seconds", "ros_nanoseconds", "ros_time", "ros_timestamp"]
-
-    return is_sensor, csv_col_lst, sql_col_lst
-
-'''
 Main Function
 '''
 def main():
@@ -348,57 +233,53 @@ def main():
     if db_name is not None:
         db = Database(username, password, server, port, db_name)
     
-    # INSERT and SELECT from the base_station_messages table:
-    #base_station_val = "N/A"
-    #db.insert_to_db("base_station_messages", "base_station_name", base_station_val)
 
-    #base_station_val = "PSU_Pitts"
-    #db.insert_to_db("base_station_messages", "base_station_name", base_station_val) 
-    #base_station_messages_id = db.select_from_db("base_station_messages", "base_station_name", base_station_val)
-
-    # INSERT and SELECT from the base_station_messages table:
+    # Get the id of the bag file:
     bag_file_table = "bag_files"
     bag_file_cols = ["bag_file_name"]
-    bag_file_vals = ["mapping_van_2024-06-24-02-18-35_0"]
-    #id1 = db.insert_and_return(bag_file_table, bag_file_cols, bag_file_vals) 
-
-    #print(id1)
-
-    id2 = db.select_from_db(bag_file_table, bag_file_cols, bag_file_vals)
-    print (id2)
-
-
-    #bag_files_id = db.select_from_db("bag_files", "bag_file_name", bag_file_val)
+    bag_file_vals = ["mapping_van_2024-06-24-02-18-35_0", "mapping_van_2024-06-24-02-33-05_0"]
+    
+    # new_bag_bile_id = db.insert_and_return(bag_file_table, bag_file_cols, bag_file_vals) 
+    bag_files_id = db.select_from_db(bag_file_table, bag_file_cols[0], bag_file_vals[0])
 
     csv_files = {
-        'trigger' : '_slash_parseTrigger.csv'
+        'trigger' : '/home/sed5658/Documents/_slash_parseTrigger.csv'
     }
-
-    '''
-    'gps_spark_fun_rear_left_gga' : '_slash_GPS_SparkFun_RearLeft_GGA.csv'
-    'gps_spark_fun_rear_left_gga' : '/home/sed5658/Documents/_slash_GPS_SparkFun_RearLeft_GGA.csv',
-    'gps_spark_fun_rear_right_gst' : '/home/sed5658/Documents/_slash_GPS_SparkFun_RearRight_GST.csv',
-    'gps_spark_fun_front_vtg' : '/home/sed5658/Documents/_slash__GPS_SparkFun_Front_VTG.csv'
-    '''
 
     for table_name, file in csv_files.items():
         write_start_time = time.time()
 
         # Declare and initialize a few variables
-        base_station_messages_id = 0
         is_sensor = 0
-        csv_col_lst = []
-        sql_col_lst =[]
+        csv_col_dict = {}
+        sql_col_lst = []
+        mapping_dict = {}
 
         # From the table name, determine whether the csv file is for a sensor, and what columns are needed
-        is_sensor, csv_col_lst, sql_col_lst = determine_columns(table_name)
+        is_sensor, csv_col_dict, sql_col_lst, mapping_dict = determine_columns(table_name)
+
+        '''
+        # Check returned values from determine_columns function
+        print(f"\n bag_files_id: {bag_files_id}")
+        print(f"\n is_sensor: {is_sensor}")
+        print(f"\n csv_col_lst: {csv_col_dict}")
+        print(f"\n sql_col_lst: {sql_col_lst}")
+        '''   
         
         # Create the dataframe based off the csv and given column parameters. For the sql columns, add an additional bag_files_id column. Then, write to the database
-        # Note: Keeping the df.to_sql rather than just using pd_csv_to_database since there might be issues with the if_exists and index which the former addresses
-        #df = db.create_df(table_name, file, is_sensor, csv_col_lst, sql_col_lst, bag_files_id, base_station_messages_id)
-        #db.csv_to_db(table_name, df, sql_col_lst)
-        #df.to_sql(table_name, db.engine, method = db.csv_to_db(table_name, df, sql_col_lst), if_exists = 'append', index = False)
-  
+        df = db.create_df(table_name, file, is_sensor, csv_col_dict, sql_col_lst, mapping_dict, bag_files_id)
+        db.csv_to_db(table_name, df, sql_col_lst)
+
+        '''
+        # Check created dataframe attributes:
+        print("Shape of DataFrame:", df.shape)
+        print("Column names:", df.columns)
+
+        for column in df.columns:
+            dtype = df[column].dtype
+            print(f"Column '{column}' has type: {dtype}")
+        '''
+
         write_end_time = time.time()
         write_time = write_end_time - write_start_time
         print(f"Time to write {table_name}: {write_time}\n")  
@@ -409,5 +290,5 @@ def main():
     total_time = end_time - start_time
     print("Total Time: ", total_time)
 
-if __name__ == "__main__":
+if __name__ == "__main__" :
     main()
