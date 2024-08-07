@@ -5,7 +5,6 @@ Currently only for the encoder, GPS SparkFun and 3D LiDAR tables. Columns may be
 
 For polars - postgres data types:
     char/varchar/text = pl.Utf8
-    smallint = pl.Int16
     int = pl.Int32
     bigint = pl.Int64
     real = pl.Float32
@@ -76,7 +75,7 @@ def determine_columns(table_name):
                              "err_bad_character" : pl.Int32
                              })
         
-        sql_col_lst = ["bag_files_id", "encoder_mode", "time",
+        sql_col_lst = ["bag_files_id", "encoder_mode",
                        "c1", "c2", "c3", "c4", "p1", "e1",
                        "err_wrong_element_length", "err_bad_element_structure",
                        "err_failed_time", "err_bad_uppercase_character",
@@ -94,24 +93,26 @@ def determine_columns(table_name):
                        "GPSSecs", "GPSMicroSecs",
                        "Latitude", "Longitude", "Altitude",
                        "GeoSep", "NavMode", "NumOfSats",
-                       "HDOP", "AgeOfDiff", "LockStatus"
+                       "HDOP", "AgeOfDiff", "LockStatus",
+                       "BaseStationID"
                        ]
-        
+
         csv_col_dict.update({"GPSSecs" : pl.Float32,
                              "GPSMicroSecs" : pl.Float32,
                              "Latitude" : pl.Float32,
                              "Longitude" : pl.Float32,
                              "Altitude" : pl.Float32,
                              "GeoSep" : pl.Float32,
-                             "NavMode" : pl.Int16,
+                             "NavMode" : pl.Int32,
                              "NumOfSats" : pl.Int32,
                              "HDOP" : pl.Float64,
                              "AgeOfDiff" : pl.Float64,
-                             "LockStatus" : pl.Int32
+                             "LockStatus" : pl.Int32,
+                             "BaseStationID" : pl.Utf8
                              })
         
         sql_col_lst = ["bag_files_id", "base_station_messages_id",
-                       "gpssecs", "gpsmicrosecs", "gpstime"
+                       "gpssecs", "gpsmicrosecs", "gpstime",
                        "latitude", "longitude", "altitude",
                        "geosep", "nav_mode", "num_of_sats",
                        "hdop", "age_of_diff", "lock_status",
