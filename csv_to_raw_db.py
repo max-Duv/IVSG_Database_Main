@@ -7,7 +7,6 @@ Note: to install polars...
     pip install connectorx
     pip install polars
         OR pip install polars-lts-cpu ()
-
     (May need to use: python3 -m pip install <package-name> --break-system-packages)
 
 Update:
@@ -15,7 +14,28 @@ Update:
     - The script works with at least the trigger and GPS SparkFun GST CSV file. More testing is needed for the different sensor types, particularly with the GPS SparkFun.     
 
 To-Do:
-    1. (IN PROGRESS) Continue testing with multiple CSV files (of different sensor types)
+    1. Continue testing with multiple CSV files (of different sensor types)
+
+    Working:
+    possible_csv_files = {
+        'gps_spark_fun_rear_left_gst' : '_slash_GPS_SparkFun_RearLeft_GST.csv',
+        'trigger' : '_slash_parseTrigger.csv'
+    }
+
+    Still to Test:
+    possible_csv_files = {
+        'encoder' : '_slash_parseEncoder.csv',
+        'gps_spark_fun_rear_left_gga' : '_slash_GPS_SparkFun_RearLeft_GGA.csv',
+        'gps_spark_fun_rear_right_gga' : '_slash_GPS_SparkFun_RearRight_GGA.csv',
+        'gps_spark_fun_front_gga' : '_slash_GPS_SparkFun_Front_GGA.csv',
+        'gps_spark_fun_rear_right_gst' : '_slash_GPS_SparkFun_RearRight_GST.csv',
+        'gps_spark_fun_front_gst' : '_slash_GPS_SparkFun_RearLeft_GST.csv',
+        'gps_spark_fun_rear_left_vtg' : '_slash_GPS_SparkFun_RearLeft_VTG.csv',
+        'gps_spark_fun_rear_right_vtg' : '_slash_GPS_SparkFun_RearRight_VTG.csv',
+        'gps_spark_fun_front_vtg' : '_slash_GPS_SparkFun_RearLeft_VTG.csv',
+        'ouster_lidar' : '_slash_ousterLidar.csv',
+        'velodyne_lidar' : '_slash_velodyneLidar.csv',
+    }
 '''
 
 import psycopg2
@@ -301,7 +321,7 @@ def main():
 
         write_end_time = time.time()
         write_time = write_end_time - write_start_time
-        print(f"Time to write {table_name}: {write_time}\n")  
+        print(f"Time to write to {table_name}: {write_time}\n")  
 
     db.disconnect()
 
