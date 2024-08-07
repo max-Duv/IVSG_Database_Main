@@ -57,12 +57,12 @@ CREATE TABLE IF NOT EXISTS encoder (
     bag_files_id int NOT NULL,
     encoder_mode varchar(50)NOT NULL,
     encoder_time real NOT NULL,
-    C1 bigint NOT NULL,
-    C2 bigint NOT NULL,
-    C3 bigint NOT NULL,
-    C4 bigint NOT NULL,
-    P1 bigint NOT NULL,
-    E1 bigint NOT NULL,
+    c1 bigint NOT NULL,
+    c2 bigint NOT NULL,
+    c3 bigint NOT NULL,
+    c4 bigint NOT NULL,
+    p1 bigint NOT NULL,
+    e1 bigint NOT NULL,
     err_wrong_element_length int NOT NULL,
     err_bad_element_structure int NOT NULL,
     err_failed_time int NOT NULL,
@@ -71,8 +71,8 @@ CREATE TABLE IF NOT EXISTS encoder (
     err_bad_character int NOT NULL,
     ros_seconds bigint NOT NULL,
     ros_nanoseconds bigint NOT NULL,
-    ros_time real NOT NULL,
-    ros_timestamp timestamp NOT NULL,
+    ros_publish_time real NOT NULL,
+    ros_record_time real NOT NULL,
     CONSTRAINT encoder_pk PRIMARY KEY (id)
 );
 
@@ -98,8 +98,8 @@ CREATE TABLE IF NOT EXISTS gps_spark_fun_rear_left_gga (
     lock_status int NOT NULL,
     ros_seconds bigint NOT NULL,
     ros_nanoseconds bigint NOT NULL,
-    ros_time real NOT NULL,
-    ros_timestamp timestamp NOT NULL,
+    ros_publish_time real NOT NULL,
+    ros_record_time real NOT NULL,
     CONSTRAINT gps_spark_fun_rear_left_gga_pk PRIMARY KEY (id)
 );
 
@@ -122,8 +122,8 @@ CREATE TABLE IF NOT EXISTS gps_spark_fun_rear_right_gga (
     lock_status int NOT NULL,
     ros_seconds bigint NOT NULL,
     ros_nanoseconds bigint NOT NULL,
-    ros_time real NOT NULL,
-    ros_timestamp timestamp NOT NULL,
+    ros_publish_time real NOT NULL,
+    ros_record_time real NOT NULL,
     CONSTRAINT gps_spark_fun_rear_right_gga_pk PRIMARY KEY (id)
 );
 
@@ -146,8 +146,8 @@ CREATE TABLE IF NOT EXISTS gps_spark_fun_front_gga (
     lock_status int NOT NULL,
     ros_seconds bigint NOT NULL,
     ros_nanoseconds bigint NOT NULL,
-    ros_time real NOT NULL,
-    ros_timestamp timestamp NOT NULL,
+    ros_publish_time real NOT NULL,
+    ros_record_time real NOT NULL,
     CONSTRAINT gps_spark_fun_front_gga_pk PRIMARY KEY (id)
 );
 
@@ -166,8 +166,8 @@ CREATE TABLE IF NOT EXISTS gps_spark_fun_rear_left_gst (
     stdalt float NOT NULL,
     ros_seconds bigint NOT NULL,
     ros_nanoseconds bigint NOT NULL,
-    ros_time real NOT NULL,
-    ros_timestamp timestamp NOT NULL,
+    ros_publish_time real NOT NULL,
+    ros_record_time real NOT NULL,
     CONSTRAINT gps_spark_fun_rear_left_gst_pk PRIMARY KEY (id)
 );
 
@@ -186,8 +186,8 @@ CREATE TABLE IF NOT EXISTS gps_spark_fun_rear_right_gst (
     stdalt float NOT NULL,
     ros_seconds bigint NOT NULL,
     ros_nanoseconds bigint NOT NULL,
-    ros_time real NOT NULL,
-    ros_timestamp timestamp NOT NULL,
+    ros_publish_time real NOT NULL,
+    ros_record_time real NOT NULL,
     CONSTRAINT gps_spark_fun_rear_right_gst_pk PRIMARY KEY (id)
 );
 
@@ -206,8 +206,8 @@ CREATE TABLE IF NOT EXISTS gps_spark_fun_front_gst (
     stdalt float NOT NULL,
     ros_seconds bigint NOT NULL,
     ros_nanoseconds bigint NOT NULL,
-    ros_time real NOT NULL,
-    ros_timestamp timestamp NOT NULL,
+    ros_publish_time real NOT NULL,
+    ros_record_time real NOT NULL,
     CONSTRAINT gps_spark_fun_front_gst_pk PRIMARY KEY (id)
 );
 
@@ -221,8 +221,8 @@ CREATE TABLE IF NOT EXISTS gps_spark_fun_rear_left_vtg (
     spdovergrndkmph real NOT NULL,
     ros_seconds bigint NULL,
     ros_nanoseconds bigint NULL,
-    ros_time real NOT NULL,
-    ros_timestamp timestamp NOT NULL,
+    ros_publish_time real NOT NULL,
+    ros_record_time real NOT NULL,
     CONSTRAINT gps_spark_fun_rear_left_vtg_pk PRIMARY KEY (id)
 );
 
@@ -236,8 +236,8 @@ CREATE TABLE IF NOT EXISTS gps_spark_fun_rear_right_vtg (
     spdovergrndkmph real NOT NULL,
     ros_seconds bigint NULL,
     ros_nanoseconds bigint NULL,
-    ros_time real NOT NULL,
-    ros_timestamp timestamp NOT NULL,
+    ros_publish_time real NOT NULL,
+    ros_record_time real NOT NULL,
     CONSTRAINT gps_spark_fun_rear_right_vtg_pk PRIMARY KEY (id)
 );
 
@@ -251,8 +251,8 @@ CREATE TABLE IF NOT EXISTS gps_spark_fun_front_vtg (
     spdovergrndkmph real NOT NULL,
     ros_seconds bigint NULL,
     ros_nanoseconds bigint NULL,
-    ros_time real NOT NULL,
-    ros_timestamp timestamp NOT NULL,
+    ros_publish_time real NOT NULL,
+    ros_record_time real NOT NULL,
     CONSTRAINT gps_spark_fun_front_vtg_pk PRIMARY KEY (id)
 );
 
@@ -269,8 +269,8 @@ CREATE TABLE IF NOT EXISTS velodyne_lidar (
     velodyne_lidar_file_time real NOT NULL, -- Might not need
     ros_seconds bigint NOT NULL,
     ros_nanoseconds bigint NOT NULL,
-    ros_time real NOT NULL,
-    ros_timestamp timestamp NOT NULL,
+    ros_publish_time real NOT NULL,
+    ros_record_time real NOT NULL,
     CONSTRAINT velodyne_lidar_pk PRIMARY KEY (id),
     CONSTRAINT velodyne_lidar_hash_tag_unique UNIQUE (velodyne_lidar_hash_tag)
 );
@@ -292,8 +292,8 @@ CREATE TABLE IF NOT EXISTS velodyne_lidar (
     yaw real NOT NULL,
     ros_seconds bigint NOT NULL,
     ros_nanoseconds bigint NOT NULL,
-    ros_time real NOT NULL,
-    ros_timestamp timestamp NOT NULL,
+    ros_publish_time real NOT NULL,
+    ros_record_time real NOT NULL,
     CONSTRAINT velodyne_lidar_pk PRIMARY KEY (id),
     CONSTRAINT velodyne_lidar_file_name_unique UNIQUE (velodyne_lidar_file_name)
 );
@@ -309,8 +309,8 @@ CREATE TABLE IF NOT EXISTS ouster_lidar (
     ouster_lidar_file_time real NOT NULL, -- Might not need
     ros_seconds bigint NOT NULL,
     ros_nanoseconds bigint NOT NULL,
-    ros_time real NOT NULL,
-    ros_timestamp timestamp NOT NULL,
+    ros_publish_time real NOT NULL,
+    ros_record_time real NOT NULL,
     CONSTRAINT ouster_lidar_pk PRIMARY KEY (id),
     CONSTRAINT ouster_lidar_hash_tag_unique UNIQUE (ouster_lidar_hash_tag)
 );
@@ -332,8 +332,8 @@ CREATE TABLE IF NOT EXISTS ouster_lidar (
     yaw real NOT NULL,
     ros_seconds bigint NOT NULL,
     ros_nanoseconds bigint NOT NULL,
-    ros_time real NOT NULL,
-    ros_timestamp timestamp NOT NULL,
+    ros_publish_time real NOT NULL,
+    ros_record_time real NOT NULL,
     CONSTRAINT ouster_lidar_pk PRIMARY KEY (id),
     CONSTRAINT ouster_lidar_file_name_unique UNIQUE (ouster_lidar_file_name)
 );
@@ -352,8 +352,8 @@ CREATE TABLE IF NOT EXISTS trigger (
     adjtwo int NOT NULL,
     adjthree int NOT NULL,
     err_failed_mode_count int NOT NULL,
-    err_failed_XI_format int NOT NULL,
-    err_failed_checkInformation int NOT NULL,
+    err_failed_xi_format int NOT NULL,
+    err_failed_check_information int NOT NULL,
     err_trigger_unknown_error_occured int NOT NULL,
     err_bad_uppercase_character int NOT NULL,
     err_bad_lowercase_character int NOT NULL,
@@ -363,8 +363,8 @@ CREATE TABLE IF NOT EXISTS trigger (
     err_wrong_element_length int NOT NULL,
     ros_seconds bigint NOT NULL,
     ros_nanoseconds bigint NOT NULL,
-    ros_time real NOT NULL,
-    ros_timestamp timestamp NOT NULL,
+    ros_publish_time real NOT NULL,
+    ros_record_time real NOT NULL,
     CONSTRAINT trigger_pk PRIMARY KEY (id)
 );
 
