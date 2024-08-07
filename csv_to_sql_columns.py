@@ -1,16 +1,4 @@
 '''
-CSV files to test:
-    'gps_spark_fun_rear_left_gga' : '_slash_GPS_SparkFun_RearLeft_GGA.csv',
-    'gps_spark_fun_rear_right_gga' : '_slash_GPS_SparkFun_RearRight_GGA.csv',
-    'gps_spark_fun_rear_left_gst' : '_slash_GPS_SparkFun_RearLeft_GST.csv',
-    'gps_spark_fun_front_gst' : '_slash_GPS_SparkFun_RearLeft_GST.csv',
-
-    'gps_spark_fun_rear_left_gga' : '/home/sed5658/Documents/_slash_GPS_SparkFun_RearLeft_GGA.csv',
-    'gps_spark_fun_rear_right_gst' : '/home/sed5658/Documents/_slash_GPS_SparkFun_RearRight_GST.csv',
-    'gps_spark_fun_front_vtg' : '/home/sed5658/Documents/_slash__GPS_SparkFun_Front_VTG.csv'
-'''
-
-'''
 This function will take a table name and return whether or not the table involves a sensor,
 the columns to take from the CSV file and the columns to insert for the Postgres database.
 Currently only for the encoder, GPS SparkFun and 3D LiDAR tables. Columns may be changed as needed.
@@ -26,7 +14,7 @@ For polars - postgres data types:
 import polars as pl
 
 def determine_columns(table_name):
-    mapping_dict = {"rosbagTimestamp" : "ros_timestamp",
+    mapping_dict = {"rosbagTimestamp" : "ros_record_time",
                     "secs" : "ros_seconds", 
                     "nsecs" : "ros_nanoseconds"
                     }
@@ -93,7 +81,7 @@ def determine_columns(table_name):
                        "err_wrong_element_length", "err_bad_element_structure",
                        "err_failed_time", "err_bad_uppercase_character",
                        "err_bad_lowercase_character", "err_bad_character",
-                       "ros_seconds", "ros_nanoseconds", "ros_time", "ros_timestamp"]
+                       "ros_seconds", "ros_nanoseconds", "ros_publish_time", "ros_record_time"]
         
         mapping_dict.update({"mode" : "encoder_mode"})
 
@@ -127,7 +115,7 @@ def determine_columns(table_name):
                        "latitude", "longitude", "altitude",
                        "geosep", "nav_mode", "num_of_sats",
                        "hdop", "age_of_diff", "lock_status",
-                       "ros_seconds", "ros_nanoseconds", "ros_time", "ros_timestamp"
+                       "ros_seconds", "ros_nanoseconds", "ros_publish_time", "ros_record_time"
                        ]
         
         mapping_dict.update({"NavMode" : "nav_mode",
@@ -156,10 +144,10 @@ def determine_columns(table_name):
                              "StdAlt" : pl.Float64
                              })
         
-        sql_col_lst = ["bag_files_id", "gpssecs", "gpsmicrosecs", "gpstime"
+        sql_col_lst = ["bag_files_id", "gpssecs", "gpsmicrosecs", "gpstime",
                        "stdmajor", "stdminor", "stdori",
                        "stdlat", "stdlon", "stdalt",
-                       "ros_seconds", "ros_nanoseconds", "ros_time", "ros_timestamp"
+                       "ros_seconds", "ros_nanoseconds", "ros_publish_time", "ros_record_time"
                        ]
 
     # Table: gps_spark_fun_vtg (left, right, or front)
@@ -179,7 +167,7 @@ def determine_columns(table_name):
         
         sql_col_lst = ["bag_files_id", "true_track", "mag_track",
                        "spdovergrndknots", "spdovergrndkmph",
-                       "ros_seconds", "ros_nanoseconds", "ros_time", "ros_timestamp"
+                       "ros_seconds", "ros_nanoseconds", "ros_publish_time", "ros_record_time"
                        ]
         
         mapping_dict.update({"TrueTrack" : "true_track",
@@ -192,7 +180,7 @@ def determine_columns(table_name):
         csv_col_lst = ["bag_files_id", 
                        "ouster_lidar_hash_tag", "ouster_lidar_location",
                        "ouster_lidar_file_size", "ouster_lidar_file_time",
-                       "ros_seconds", "ros_nanoseconds", "ros_timestamp"
+                       "ros_seconds", "ros_nanoseconds", "ros_record_time"
                        ]
         
         csv_col_dict = {"bag_files_id" : pl.Int32,
@@ -202,13 +190,13 @@ def determine_columns(table_name):
                         "ouster_lidar_file_time" : pl.Float32,
                         "ros_seconds" : pl.Int64,
                         "ros_nanoseconds" : pl.Int64,
-                        "ros_timestamp" : pl.Float32
+                        "ros_record_time" : pl.Float32
                         }
         
         sql_col_lst = ["bag_files_id", 
                        "ouster_lidar_hash_tag", "ouster_lidar_location",
                        "ouster_lidar_file_size", "ouster_lidar_file_time",
-                       "ros_seconds", "ros_nanoseconds", "ros_time", "ros_timestamp"
+                       "ros_seconds", "ros_nanoseconds", "ros_publish_time", "ros_record_time"
                        ]
         
         mapping_dict = {"bag_files_id" : "bag_files_id",
@@ -218,7 +206,7 @@ def determine_columns(table_name):
                         "ouster_lidar_file_time" : "ouster_lidar_file_time",
                         "ros_seconds" : "ros_seconds",
                         "ros_nanoseconds" : "ros_nanoseconds",
-                        "ros_timestamp" : "ros_timestamp"
+                        "ros_record_time" : "ros_record_time"
                         }
 
     # Table: trigger
@@ -257,7 +245,7 @@ def determine_columns(table_name):
                        "err_trigger_unknown_error_occured", "err_bad_uppercase_character",
                        "err_bad_lowercase_character", "err_bad_three_adj_element",
                        "err_bad_first_element", "err_bad_character", "err_wrong_element_length",
-                       "ros_seconds", "ros_nanoseconds", "ros_time", "ros_timestamp"
+                       "ros_seconds", "ros_nanoseconds", "ros_publish_time", "ros_record_time"
                        ]
         
         mapping_dict.update({"mode" : "trigger_mode", 
