@@ -1,7 +1,7 @@
 '''
 The purpose of this script is to efficiently bulk insert to the Postgres database from a CSV file using copy_expert and the Polars library.
 
-Use with csv_to_sql_columns.py script.
+Use with csv_to_sql_columns.py script and raw_data_db_launch.sql.
 
 Note: to install polars...
     pip install connectorx
@@ -12,7 +12,7 @@ Note: to install polars...
 
 Update:
     - Updated to mainly use Polars to properly edit the dataframe to inlcude new columns and match the layout of the corresponding database table.
-    - The script works with at least the trigger CSV file. More testing is needed for the different sensor types, particularly with the GPS SparkFun.     
+    - The script works with at least the trigger and GPS SparkFun GST CSV file. More testing is needed for the different sensor types, particularly with the GPS SparkFun.     
 
 To-Do:
     1. (IN PROGRESS) Continue testing with multiple CSV files (of different sensor types)
@@ -106,27 +106,27 @@ class Database:
 
             # Using polars instead of pandas to read from the CSV file and create a dataframe
             csv_col_lst = list(csv_col_dict.keys())
-            df = pl.read_csv(file, columns = csv_col_lst, separator = "\t")
+            df = pl.read_csv(file, columns = csv_col_lst, separator = ",")
             print("Used Polars to read the csv file.")
             
             # All sensors have a column for bag files and rostimes, add and fill those columns here
             if (is_sensor == 1):
                 bag_file_column = pl.Series('bag_files_id', [bag_files_id] * df.height, dtype =  pl.Int32)
                 df = df.with_columns(bag_file_column)
-                print("New column for bag_files added")
+                print("New column for bag_files added.")
 
                 # ros_time = secs + nsecs * 10^-9
                 # gpstime = gpssecs + gpsnsecs * 10^-9
                 exp = 10**(-9)
-                ros_time_column = ((pl.col('secs') + pl.col('nsecs') * exp).cast(pl.Float32).alias('ros_time'))
+                ros_time_column = ((pl.col('secs') + (pl.col('nsecs') * exp)).cast(pl.Float32).alias('ros_publish_time'))
                 df = df.with_columns(ros_time_column)
-                print("New column for ros_time added")
+                print("New column for ros_publish_time added.")
 
                 if (table_name == 'gps_spark_fun_rear_left_gga' or table_name == 'gps_spark_fun_rear_right_gga' or table_name == 'gps_spark_fun_front_gga' or
                     table_name == 'gps_spark_fun_rear_left_gst' or table_name == 'gps_spark_fun_rear_right_gst' or table_name == 'gps_spark_fun_front_gst'):
-                    gpstime_column = ((pl.col('GPSSecs') + pl.col('GPSMicroSecs') * exp).cast(pl.Float32).alias('gpstime'))
+                    gpstime_column = ((pl.col('GPSSecs') + (pl.col('GPSMicroSecs') * exp)).cast(pl.Float32).alias('gpstime'))
                     df = df.with_columns(gpstime_column)
-                    print("New column for gpstime added")
+                    print("New column for gpstime added.")
 
                 # GGA sensor has a column for base station - access the SQL database for this, return the id of the base station
                 if (table_name == 'gps_spark_fun_rear_left_gga' or table_name == 'gps_spark_fun_rear_right_gga' or table_name == 'gps_spark_fun_front_gga'):
@@ -141,23 +141,17 @@ class Database:
 
                     base_station_id_column = pl.Series('base_station_messages_id', base_station_id_lst)
                     df = df.with_columns(base_station_id_column)
-                    print("New column for base_station_ids added")
+                    print("New column for base_station_ids added.")
 
             '''
             # Check How Data Frame Has Changed
-            print("Old Columns")
-            print(list(old_columns))
-
             print("Updated Columns")
             print(list(df.columns))
             print(df.head(2))
             '''
             
             # Ensure uniformity between the dataframe columns and the db table columns. Changing the names and reordering to match SQL setup
-            if (len(sql_col_lst) != len(df.columns)):
-                print("Error, the number of data frame columns is not the same as the number of database table columns.")
-            
-            else:
+            if (len(sql_col_lst) == len(df.columns)):
                 # Ensure datatypes are the same, otherwise you won't be able to insert
                 for key, value in csv_col_dict.items():
                     df = df.with_columns([pl.col(key).cast(value)])
@@ -167,11 +161,15 @@ class Database:
 
                 new_column_order = sql_col_lst
                 df = df.select(new_column_order)
-                #print(list(df.columns))
+                # print(list(df.columns))
                     
                 # For each table, print the first two rows
-                print(f"First contents of '{table_name}' CSV file: ")
+                print(f"\nData frame successfully created. Displaying the first two rows of the '{table_name}' data frame: ")
                 print(df.head(2))
+            
+            else:
+                print("hi")
+                raise Exception("Error, the number of data frame columns is not the same as the number of database table columns.")
             
             return df
 
@@ -186,7 +184,7 @@ class Database:
             csv_buffer = StringIO()
             pandas_df.to_csv(csv_buffer, index=False, header=True, sep=",")
             csv_buffer.seek(0)   # Rewind the buffer to the beginning for reading
-            #print(csv_buffer.read())
+            # print(csv_buffer.read())
 
             # Build the query
             query_fillin = f"{table_name} ({', '.join(sql_col_lst)})"
@@ -194,10 +192,10 @@ class Database:
  
             # Use copy_expert to transport data into the database
             self.cursor.copy_expert(sql = query, file = csv_buffer)
-            print("CSV successfully inserted into database.")
+            print(f"The CSV file has successfully been inserted into {table_name}.")
 
         except:
-            print("Error inserting CSV into database.")
+            print("Error inserting the data frame into database.")
 
     # A function to disconnect from the postgres server
     def disconnect(self):
@@ -242,8 +240,25 @@ def main():
     # new_bag_bile_id = db.insert_and_return(bag_file_table, bag_file_cols, bag_file_vals) 
     bag_files_id = db.select_from_db(bag_file_table, bag_file_cols[0], bag_file_vals[0])
 
+    possible_csv_files = {
+        'encoder' : '_slash_parseEncoder.csv',
+        'gps_spark_fun_rear_left_gga' : '_slash_GPS_SparkFun_RearLeft_GGA.csv',
+        'gps_spark_fun_rear_right_gga' : '_slash_GPS_SparkFun_RearRight_GGA.csv',
+        'gps_spark_fun_front_gga' : '_slash_GPS_SparkFun_Front_GGA.csv',
+        'gps_spark_fun_rear_left_gst' : '_slash_GPS_SparkFun_RearLeft_GST.csv',
+        'gps_spark_fun_rear_right_gst' : '_slash_GPS_SparkFun_RearRight_GST.csv',
+        'gps_spark_fun_front_gst' : '_slash_GPS_SparkFun_RearLeft_GST.csv',
+        'gps_spark_fun_rear_left_vtg' : '_slash_GPS_SparkFun_RearLeft_VTG.csv',
+        'gps_spark_fun_rear_right_vtg' : '_slash_GPS_SparkFun_RearRight_VTG.csv',
+        'gps_spark_fun_front_vtg' : '_slash_GPS_SparkFun_RearLeft_VTG.csv',
+        'ouster_lidar' : '_slash_ousterLidar.csv',
+        'velodyne_lidar' : '_slash_velodyneLidar.csv',
+        'trigger' : '_slash_parseTrigger.csv'
+    }
+
     csv_files = {
-        'trigger' : '/home/sed5658/Documents/_slash_parseTrigger.csv'
+        'trigger' : '_slash_parseTrigger.csv',
+        'gps_spark_fun_rear_left_gst' : '_slash_GPS_SparkFun_RearLeft_GST.csv'
     }
 
     for table_name, file in csv_files.items():
@@ -260,25 +275,29 @@ def main():
 
         '''
         # Check returned values from determine_columns function
-        print(f"\n bag_files_id: {bag_files_id}")
-        print(f"\n is_sensor: {is_sensor}")
-        print(f"\n csv_col_lst: {csv_col_dict}")
-        print(f"\n sql_col_lst: {sql_col_lst}")
-        '''   
+        print(f"\nbag_files_id: {bag_files_id}")
+        print(f"\nis_sensor: {is_sensor}")
+        print(f"\ncsv_col_lst: {csv_col_dict}")
+        print(f"\nsql_col_lst: {sql_col_lst}")
+        '''    
         
-        # Create the dataframe based off the csv and given column parameters. For the sql columns, add an additional bag_files_id column. Then, write to the database
+        # Create the dataframe based off the CSV and given column parameters. For the sql columns, add an additional bag_files_id column.
+        print(f"\nStarting to write '{file}' to {table_name}")
         df = db.create_df(table_name, file, is_sensor, csv_col_dict, sql_col_lst, mapping_dict, bag_files_id)
-        db.csv_to_db(table_name, df, sql_col_lst)
 
         '''
         # Check created dataframe attributes:
-        print("Shape of DataFrame:", df.shape)
+        #print(df)
+        print("\nShape of DataFrame:", df.shape)
         print("Column names:", df.columns)
 
         for column in df.columns:
             dtype = df[column].dtype
             print(f"Column '{column}' has type: {dtype}")
         '''
+
+        # Write the data frame to the database
+        db.csv_to_db(table_name, df, sql_col_lst)
 
         write_end_time = time.time()
         write_time = write_end_time - write_start_time
