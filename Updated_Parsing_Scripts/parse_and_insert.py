@@ -218,11 +218,11 @@ class Database:
             columns = [header[0] for header in cursor.description]
 
             # Create a Pandas data frame out of the above. Then transform it into a Polars data frame
-            pd_df = pd.data frame(rows, columns = columns)
+            pd_df = pd.dataframe(rows, columns = columns)
             df = pl.from_pandas(pd_df)
 
         except psycopg2.Error as e:
-            df = pl.data frame()
+            df = pl.dataframe()
             print(f"\nUnable to select from the database: {e}")
             conn.rollback()
 
@@ -353,14 +353,14 @@ class DFBuilder:
 
             # If any data was found, then make a data frame out of this data frame. Otherwise, create an empty data frame.
             if data:
-                df = pl.data frame(data)
+                df = pl.dataframe(data)
 
             else:
-                df = pl.data frame()
+                df = pl.dataframe()
 
         except Exception as e:
             print(f"Error: {e}")
-            df = pl.data frame()
+            df = pl.dataframe()
 
         return df   # Return the data frame
 
@@ -380,11 +380,11 @@ class DFBuilder:
             df_pandas = df_pandas.dropna(how = 'all')
 
             # Convert to Polars to continue handling
-            df = pl.data frame(df_pandas)
+            df = pl.from_pandas(df_pandas)
 
         except Exception as e:
             print(f"Error: {e}")
-            df = pl.data frame()
+            df = pl.dataframe()
 
         return df
 
@@ -669,7 +669,7 @@ def bag_csv_to_df(db, files, bag_name, bag_id, topic_lst, from_bag, from_csv, to
         
         if (to_csv == 1): 
             folder = bag_name[:-4]
-            write_csv(folder, topic, df)
+            write_csv(folder, topic, new_df)
 
         topic_end_time = time.time()
         topic_total_time = topic_end_time - topic_start_time
