@@ -13,17 +13,15 @@ Usage:
     parseUtilities.py script to simplify the number of scripts.
 
 Method(s): get_topics(topic)
-    Takes in a topic and will return the corresponding table (table_name), whether or not it's a sensor (is_sensor), a mapping dictionary
-    of the wanted ROS bag topics to the corresponding table column names and data types, and a list of the columns for the database table.
+    Takes in a topic and will return the corresponding table (table_name), a mapping dictionary of the wanted ROS bag topics to the
+    corresponding table column names and data types, and a list of the columns for the database table.
 
 For adding in a future table:
     1. Update SQL script
         a. New CREATE TABLE
         b. New ADD FOREIGN KEY
     2. From the updated SQL script, set table_name to be the name of the newly added table
-    3. Note whether the table/topic is a sensor
-        a. Set is_sensor to 0 (is not a sensor) or 1 (is a sensor)
-    4. Create a dictionary (mapping_dict)
+    3. Create a dictionary (mapping_dict)
         a. Keys are the topics you want from the ROS bag / the older CSV files
         b. Values are a list of the corresponding name in the database table and proper datatype. To ensure data can be written to
            the database, we will cast each value to be the same type as is in the database.
@@ -33,7 +31,7 @@ For adding in a future table:
                 bigint = pl.Int64
                 real = pl.Float32
                 float = pl.Float64
-    5. Make a list of the columns in the database table that need 
+    4. Make a list of the columns in the database table that need 
 
 Note: This script is applicable only for CSV files that were only written using the bag_to_csv_py3.py script, as the CSV columns match with
       with the ROS bag subtopics. If you were to use the parse_and_insert.py script to write a CSV file from a bag file, the columns would
@@ -49,13 +47,11 @@ import polars as pl
 
 def get_topics(topic):
     table_name = ""
-    is_sensor = 0
     mapping_dict = {}
     db_col_lst = []
 
     # Table: encoder
     if (topic == '/parseEncoder'):
-        is_sensor = 1
         table_name = 'encoder'
 
         mapping_dict = {'rosbagTimestamp': ['ros_record_time', pl.Float32],
@@ -77,17 +73,15 @@ def get_topics(topic):
         }
         
         db_col_lst = ["bag_files_id", "encoder_mode",
-                       "c1", "c2", "c3", "c4", "p1", "e1",
-                       "err_wrong_element_length", "err_bad_element_structure",
-                       "err_failed_time", "err_bad_uppercase_character",
-                       "err_bad_lowercase_character", "err_bad_character",
-                       "ros_seconds", "ros_nanoseconds", "ros_publish_time", "ros_record_time"
+                      "c1", "c2", "c3", "c4", "p1", "e1",
+                      "err_wrong_element_length", "err_bad_element_structure",
+                      "err_failed_time", "err_bad_uppercase_character",
+                      "err_bad_lowercase_character", "err_bad_character",
+                      "ros_seconds", "ros_nanoseconds", "ros_publish_time", "ros_record_time"
         ]
         
     # Table: gps_spark_fun_gga (left, right, or front)
     elif (topic == '/GPS_SparkFun_RearLeft_GGA' or topic == '/GPS_SparkFun_RearRight_GGA' or topic == '/GPS_SparkFun_Front_GGA'):
-        is_sensor = 1
-        
         if (topic == '/GPS_SparkFun_RearLeft_GGA'):
             table_name = 'gps_spark_fun_rear_left_gga'
         elif (topic == '/GPS_SparkFun_RearRight_GGA'):
@@ -113,17 +107,15 @@ def get_topics(topic):
         }
         
         db_col_lst = ["bag_files_id", "base_station_messages_id",
-                       "gpssecs", "gpsmicrosecs", "gpstime",
-                       "latitude", "longitude", "altitude",
-                       "geosep", "nav_mode", "num_of_sats",
-                       "hdop", "age_of_diff", "lock_status",
-                       "ros_seconds", "ros_nanoseconds", "ros_publish_time", "ros_record_time"
+                      "gpssecs", "gpsmicrosecs", "gpstime",
+                      "latitude", "longitude", "altitude",
+                      "geosep", "nav_mode", "num_of_sats",
+                      "hdop", "age_of_diff", "lock_status",
+                      "ros_seconds", "ros_nanoseconds", "ros_publish_time", "ros_record_time"
         ]
         
     # Table: gps_spark_fun_gst (left, right, or front)
     elif (topic == '/GPS_SparkFun_RearLeft_GST' or topic == '/GPS_SparkFun_RearRight_GST' or topic == '/GPS_SparkFun_Front_GST'):
-        is_sensor = 1
-        
         if (topic == '/GPS_SparkFun_RearLeft_GST'):
             table_name = 'gps_spark_fun_rear_left_gst'
         elif (topic == '/GPS_SparkFun_RearRight_GST'):
@@ -145,15 +137,13 @@ def get_topics(topic):
         }
 
         db_col_lst = ["bag_files_id", "gpssecs", "gpsmicrosecs", "gpstime",
-                       "stdmajor", "stdminor", "stdori",
-                       "stdlat", "stdlon", "stdalt",
-                       "ros_seconds", "ros_nanoseconds", "ros_publish_time", "ros_record_time"
+                      "stdmajor", "stdminor", "stdori",
+                      "stdlat", "stdlon", "stdalt",
+                      "ros_seconds", "ros_nanoseconds", "ros_publish_time", "ros_record_time"
         ]
 
     # Table: gps_spark_fun_vtg (left, right, or front)
     elif (topic == '/GPS_SparkFun_RearLeft_VTG' or topic == '/GPS_SparkFun_RearRight_VTG' or topic == '/GPS_SparkFun_Front_VTG'):
-        is_sensor = 1
-        
         if (topic == '/GPS_SparkFun_RearLeft_VTG'):
             table_name = 'gps_spark_fun_rear_left_vtg'
         elif (topic == '/GPS_SparkFun_RearRight_VTG'):
@@ -171,8 +161,32 @@ def get_topics(topic):
         }
 
         db_col_lst = ["bag_files_id", "true_track", "mag_track",
-                       "spdovergrndknots", "spdovergrndkmph",
-                       "ros_seconds", "ros_nanoseconds", "ros_publish_time", "ros_record_time"
+                      "spdovergrndknots", "spdovergrndkmph",
+                      "ros_seconds", "ros_nanoseconds", "ros_publish_time", "ros_record_time"
+        ]
+
+    # Table: sick_lms_5xx
+    elif (topic == '/sick_lms_5xx/scan'):
+        table_name = 'sick_lms_5xx'
+
+        mapping_dict = {'rosbagTimestamp': ['ros_record_time', pl.Float32],
+                        'secs': ['ros_seconds', pl.Int64],
+                        'nsecs': ['ros_nanoseconds', pl.Int64],
+                        'angle_min' : ['angle_min', pl.Float32],
+                        'angle_max' : ['angle_max', pl.Float32],
+                        'angle_increment' : ['angle_increment', pl.Float32],
+                        'time_increment' : ['time_increment', pl.Float32],
+                        'scan_time' : ['scan_time', pl.Float32],
+                        'range_min' : ['range_min', pl.Float32],
+                        'range_max' : ['range_max', pl.Float32],
+                        'ranges' : ['ranges', pl.Utf8],
+                        'intensities' : ['intensities', pl.Utf8]
+        }
+
+        db_col_lst = ["bag_files_id", "scan_time", "time_increment",
+                      "angle_min", "angle_max", "angle_increment",
+                      "range_min", "range_max", "ranges", "intensities", 
+                      "ros_seconds", "ros_nanoseconds", "ros_publish_time", "ros_record_time"
         ]
         
     # Table: velodyne_lidar and ouster_lidar
@@ -189,14 +203,13 @@ def get_topics(topic):
         }
         
         db_col_lst = ["bag_files_id", 
-                       "ouster_lidar_hash_tag", "ouster_lidar_location",
-                       "ouster_lidar_file_size", "ouster_lidar_file_time",
-                       "ros_seconds", "ros_nanoseconds", "ros_publish_time", "ros_record_time"
+                      "ouster_lidar_hash_tag", "ouster_lidar_location",
+                      "ouster_lidar_file_size", "ouster_lidar_file_time",
+                      "ros_seconds", "ros_nanoseconds", "ros_publish_time", "ros_record_time"
         ]
         
     # Table: trigger
     elif (topic == '/parseTrigger'):
-        is_sensor = 1
         table_name = 'trigger'
 
         mapping_dict = {'rosbagTimestamp': ['ros_record_time', pl.Float32],
@@ -220,21 +233,20 @@ def get_topics(topic):
         }
 
         db_col_lst = ["bag_files_id", "trigger_mode", "trigger_mode_counts",
-                       "adjone", "adjtwo", "adjthree",
-                       "err_failed_mode_count", "err_failed_xi_format", "err_failed_check_information",
-                       "err_trigger_unknown_error_occured", "err_bad_uppercase_character",
-                       "err_bad_lowercase_character", "err_bad_three_adj_element",
-                       "err_bad_first_element", "err_bad_character", "err_wrong_element_length",
-                       "ros_seconds", "ros_nanoseconds", "ros_publish_time", "ros_record_time"
+                      "adjone", "adjtwo", "adjthree",
+                      "err_failed_mode_count", "err_failed_xi_format", "err_failed_check_information",
+                      "err_trigger_unknown_error_occured", "err_bad_uppercase_character",
+                      "err_bad_lowercase_character", "err_bad_three_adj_element",
+                      "err_bad_first_element", "err_bad_character", "err_wrong_element_length",
+                      "ros_seconds", "ros_nanoseconds", "ros_publish_time", "ros_record_time"
         ]
         
         '''
         # Simple Debugging:
         print(f"table_name: {table_name}")
-        print(f"is_sensor: {is_sensor}")
         print(f"mapping_dict: {mapping_dict}")
         print(f"df_col_dict: {df_col_dict}")
         print(f"db_col_lst: {db_col_lst}")
         '''
 
-    return is_sensor, table_name, mapping_dict, db_col_lst
+    return table_name, mapping_dict, db_col_lst
