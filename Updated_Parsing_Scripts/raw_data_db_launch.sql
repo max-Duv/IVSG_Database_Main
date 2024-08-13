@@ -258,6 +258,26 @@ CREATE TABLE IF NOT EXISTS gps_spark_fun_front_vtg (
 ----------------------------------------------------------------------
 -- Sensor Type: LiDAR
 ----------------------------------------------------------------------
+-- Table: sick_lms_5xx
+CREATE TABLE IF NOT EXISTS sick_lms_5xx (
+    id serial NOT NULL,
+    bag_files_id int NOT NULL,
+    scan_time real NOT NULL,
+    time_increment real NOT NULL,
+    angle_min real NOT NULL,
+    angle_max real NOT NULL,
+    angle_increment real NOT NULL,
+    range_min real NOT NULL,
+    range_max real NOT NULL,
+    ranges text NOT NULL,
+    intensities text NOT NULL,
+    ros_seconds bigint NOT NULL,
+    ros_nanoseconds bigint NOT NULL,
+    ros_publish_time real NOT NULL,
+    ros_record_time real NOT NULL,
+    CONSTRAINT sick_lms_5xx_pk PRIMARY KEY (id)
+);
+
 -- Table: velodyne_lidar (option 1)
 CREATE TABLE IF NOT EXISTS velodyne_lidar (
     id serial NOT NULL,
@@ -499,6 +519,14 @@ ALTER TABLE gps_spark_fun_rear_right_vtg ADD
 
 -- Reference: gps_spark_fun_front_vtg_bag_files (table: gps_spark_fun_front_vtg)
 ALTER TABLE gps_spark_fun_front_vtg ADD
+    FOREIGN KEY (bag_files_id)
+    REFERENCES bag_files (id)  
+    NOT DEFERRABLE 
+    INITIALLY IMMEDIATE
+;
+
+-- Reference: sick_lms_5xx_bag_files (table: sick_lms_5xx)
+ALTER TABLE sick_lms_5xx ADD
     FOREIGN KEY (bag_files_id)
     REFERENCES bag_files (id)  
     NOT DEFERRABLE 
