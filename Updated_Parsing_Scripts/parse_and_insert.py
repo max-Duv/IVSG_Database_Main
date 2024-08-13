@@ -218,11 +218,11 @@ class Database:
             columns = [header[0] for header in cursor.description]
 
             # Create a Pandas data frame out of the above. Then transform it into a Polars data frame
-            pd_df = pd.dataframe(rows, columns = columns)
+            pd_df = pd.DataFrame(rows, columns = columns)
             df = pl.from_pandas(pd_df)
 
         except psycopg2.Error as e:
-            df = pl.dataframe()
+            df = pl.DataFrame()
             print(f"\nUnable to select from the database: {e}")
             conn.rollback()
 
@@ -305,7 +305,7 @@ class Database:
     #           Transform a CSV file into a Pandas and then Polars data frame. Only add certain columns
     #           from the CSV file to the data frame to match with the SQL table.
     # 
-    #       4. def update_df(self, df, is_sensor, table_name, mapping_dict, db_col_lst, bag_files_id, db)
+    #       4. def update_df(self, df, table_name, mapping_dict, db_col_lst, bag_files_id, db)
     #           Edit a data frame to have the same columns, same column data types, and same column names
     #           as the corresponding database table. Information such as bag_files_id and ros_publish_time are
     #           added here.
@@ -353,14 +353,14 @@ class DFBuilder:
 
             # If any data was found, then make a data frame out of this data frame. Otherwise, create an empty data frame.
             if data:
-                df = pl.dataframe(data)
+                df = pl.DataFrame(data)
 
             else:
-                df = pl.dataframe()
+                df = pl.DataFrame()
 
         except Exception as e:
             print(f"Error: {e}")
-            df = pl.dataframe()
+            df = pl.DataFrame()
 
         return df   # Return the data frame
 
@@ -384,7 +384,7 @@ class DFBuilder:
 
         except Exception as e:
             print(f"Error: {e}")
-            df = pl.dataframe()
+            df = pl.DataFrame()
 
         return df
 
@@ -392,58 +392,57 @@ class DFBuilder:
     Edit a data frame to have the same columns, same column data types, and same column names as the corresponding database table. Information such as bag_files_id
     and ros_publish_time are added now.
     '''
-    def update_df(self, df, is_sensor, table_name, mapping_dict, db_col_lst, bag_files_id, db):
+    def update_df(self, df, table_name, mapping_dict, db_col_lst, bag_files_id, db):
         try:
-            if (is_sensor == 1):
-                # Create a new column for the bag_file_id, which should be the same as bags are read one at a time
-                bag_file_column = pl.Series('bag_files_id', [bag_files_id] * df.height, dtype =  pl.Int32)
-                df = df.with_columns(bag_file_column)
-                print("\tNew column for bag_files_id added.")
+            # Create a new column for the bag_file_id, which should be the same as bags are read one at a time
+            bag_file_column = pl.Series('bag_files_id', [bag_files_id] * df.height, dtype =  pl.Int32)
+            df = df.with_columns(bag_file_column)
+            print("\tNew column for bag_files_id added.")
 
-                # Add a column for ros_publish_time: ros_time = secs + nsecs * 10^-9
-                exp = 10**(-9)
-                ros_time_column = ((pl.col('secs') + (pl.col('nsecs') * exp)).cast(pl.Float32).alias('ros_publish_time'))
-                df = df.with_columns(ros_time_column)
-                print("\tNew column for ros_publish_time added.")
+            # Add a column for ros_publish_time: ros_time = secs + nsecs * 10^-9
+            exp = 10**(-9)
+            ros_time_column = ((pl.col('secs') + (pl.col('nsecs') * exp)).cast(pl.Float32).alias('ros_publish_time'))
+            df = df.with_columns(ros_time_column)
+            print("\tNew column for ros_publish_time added.")
 
-                if (table_name == 'gps_spark_fun_rear_left_gga' or table_name == 'gps_spark_fun_rear_right_gga' or table_name == 'gps_spark_fun_front_gga' or
-                    table_name == 'gps_spark_fun_rear_left_gst' or table_name == 'gps_spark_fun_rear_right_gst' or table_name == 'gps_spark_fun_front_gst'):
-                    # Add a column for gpstime: gpstime = gpssecs + gpsnsecs * 10^-9
-                    gpstime_column = ((pl.col('GPSSecs') + (pl.col('GPSMicroSecs') * exp)).cast(pl.Float32).alias('gpstime'))
-                    df = df.with_columns(gpstime_column)
-                    print("\tNew column for gpstime added.")
+            if (table_name == 'gps_spark_fun_rear_left_gga' or table_name == 'gps_spark_fun_rear_right_gga' or table_name == 'gps_spark_fun_front_gga' or
+                table_name == 'gps_spark_fun_rear_left_gst' or table_name == 'gps_spark_fun_rear_right_gst' or table_name == 'gps_spark_fun_front_gst'):
+                # Add a column for gpstime: gpstime = gpssecs + gpsnsecs * 10^-9
+                gpstime_column = ((pl.col('GPSSecs') + (pl.col('GPSMicroSecs') * exp)).cast(pl.Float32).alias('gpstime'))
+                df = df.with_columns(gpstime_column)
+                print("\tNew column for gpstime added.")
 
-                    # GGA sensor has a column for base station - access the database for this to get the id of the base station
-                    if (table_name == 'gps_spark_fun_rear_left_gga' or table_name == 'gps_spark_fun_rear_right_gga' or table_name == 'gps_spark_fun_front_gga'):
-                        base_station_id_lst = []
-                        
-                        # Make a list out of all of the values in the 'BaseStationID' column
-                        base_station_column = df.select(pl.col('BaseStationID'))
-                        base_station_lst = base_station_column.to_series().str.strip_chars('"').to_list()
+                # GGA sensor has a column for base station - access the database for this to get the id of the base station
+                if (table_name == 'gps_spark_fun_rear_left_gga' or table_name == 'gps_spark_fun_rear_right_gga' or table_name == 'gps_spark_fun_front_gga'):
+                    base_station_id_lst = []
+                    
+                    # Make a list out of all of the values in the 'BaseStationID' column
+                    base_station_column = df.select(pl.col('BaseStationID'))
+                    base_station_lst = base_station_column.to_series().str.strip_chars('"').to_list()
 
-                        # For each base station in this list, find the corresponding id in the database (will insert if not already there),
-                        # then add this to another list of all of the ids
-                        for base_station in base_station_lst:
-                            base_station_id = db.select('base_station_messages', 'id', 'base_station_name', base_station)
-                            base_station_id_lst.append(base_station_id)
-                        
-                        # Add a column to the database of the list of base station ids
-                        base_station_id_column = pl.Series('base_station_messages_id', base_station_id_lst)
-                        df = df.with_columns(base_station_id_column)
+                    # For each base station in this list, find the corresponding id in the database (will insert if not already there),
+                    # then add this to another list of all of the ids
+                    for base_station in base_station_lst:
+                        base_station_id = db.select('base_station_messages', 'id', 'base_station_name', base_station)
+                        base_station_id_lst.append(base_station_id)
+                    
+                    # Add a column to the database of the list of base station ids
+                    base_station_id_column = pl.Series('base_station_messages_id', base_station_id_lst)
+                    df = df.with_columns(base_station_id_column)
 
-                        # Drop the original 'BaseStationID' column from the data frame
-                        df = df.drop('BaseStationID')
+                    # Drop the original 'BaseStationID' column from the data frame
+                    df = df.drop('BaseStationID')
 
-                        # Update the mapping_dict by replacing 'BaseStationID' with 'base_station_messages_id', keeping the original value
-                        #   1. Find the key in the mapping_dict corresponding to 'BaseStationID', use this key to get the corresponding value
-                        #   2. Delete the old key and add the new key with the same value
-                        base_station_key = list(mapping_dict.keys())[-1]
-                        base_station_value = mapping_dict[base_station_key]
+                    # Update the mapping_dict by replacing 'BaseStationID' with 'base_station_messages_id', keeping the original value
+                    #   1. Find the key in the mapping_dict corresponding to 'BaseStationID', use this key to get the corresponding value
+                    #   2. Delete the old key and add the new key with the same value
+                    base_station_key = list(mapping_dict.keys())[-1]
+                    base_station_value = mapping_dict[base_station_key]
 
-                        del mapping_dict[base_station_key]
-                        mapping_dict.update({'base_station_messages_id' : base_station_value})
+                    del mapping_dict[base_station_key]
+                    mapping_dict.update({'base_station_messages_id' : base_station_value})
 
-                        print("\tNew column for base_station_ids added.")
+                    print("\tNew column for base_station_ids added.")
 
             '''
             # Simple Debugging: Check How Data Frame Has Changed
@@ -569,7 +568,7 @@ def db_to_df(to_csv, db, bag_name, bag_id, topic_lst):
 
         # For each topic, create a data frame based off of the bag_file id - will create a data frame of all the data from 
         # the same bag file id
-        is_sensor, table_name, mapping_dict, db_col_lst = get_topics(topic)
+        table_name, mapping_dict, db_col_lst = get_topics(topic)
         col = "bag_files_id"
         val = bag_id
         df = db.select_multiple(table_name, col, val)
@@ -631,7 +630,6 @@ def bag_csv_to_df(db, files, bag_name, bag_id, topic_lst, from_bag, from_csv, to
         topic_start_time = time.time()
 
         # Declare and initialize a few variables
-        is_sensor = 0
         table_name = ''
         mapping_dict = {}
         db_col_lst = []
@@ -640,7 +638,7 @@ def bag_csv_to_df(db, files, bag_name, bag_id, topic_lst, from_bag, from_csv, to
         print(f"\nStarting on '{topic}':")
 
         # Determine relevant information based off of the topic
-        is_sensor, table_name, mapping_dict, db_col_lst = get_topics(topic)
+        table_name, mapping_dict, db_col_lst = get_topics(topic)
         key_lst = list(mapping_dict.keys())
 
         polars = DFBuilder(file_name = file, topic = topic, keys = key_lst)   # Create an instance of the DFBuilder class
@@ -655,7 +653,7 @@ def bag_csv_to_df(db, files, bag_name, bag_id, topic_lst, from_bag, from_csv, to
             print("\nOriginal data frame created.\n")
 
         # Update the data frame to add new columns, reorder the columns, and change the column names.
-        new_df = polars.update_df(df = df, is_sensor = is_sensor, table_name = table_name,
+        new_df = polars.update_df(df = df, table_name = table_name,
                                   mapping_dict = mapping_dict, db_col_lst = db_col_lst,
                                   bag_files_id = bag_id, db = db)
 
@@ -740,11 +738,11 @@ def main():
     start_time = time.time()   # Start timing the runtime
 
     # Determine plans: whether the df is coming from the db, a bag file, or a CSV file and if the df is being written to a CSV file or to the db 
-    from_db = 0
-    from_bag = 1
-    from_csv = 0
+    from_db = 1
+    from_bag = 0
+    from_csv = 0 
     to_csv = 1
-    to_db = 1
+    to_db = 0
 
     # Declare and initialize multiple variables
     bag_files = []
