@@ -46,17 +46,6 @@ To-Do:
     1. Integrate camera parsing functions
     2. Integrate velodyne parsing functions
 '''
-
-'''
-Hi, my name is Sadie DUncan, I'll be living in Dorchestor Apartments this year.
-
-I know that the deadline to request parking has already passed, but I was wondering if there was still any available spots left for this year and if so, what would be the price for a parking pass?
-
-
-
-I was also wondering - since I know that rent is due before the 21st of Augst and then the 1st of every month - is August's rent pro-rated?
-'''
-
 from io import StringIO 
 from pathlib import Path
 import os
